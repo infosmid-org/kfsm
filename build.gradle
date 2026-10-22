@@ -3,8 +3,12 @@ import com.vanniktech.maven.publish.KotlinMultiplatform
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinTest
 
+import java.nio.file.AccessDeniedException
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
-import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
+
 
 buildscript {
     repositories {
@@ -215,13 +219,13 @@ kotlin {
         jvmMain {
             dependencies {
                 api libs.kotlin.reflect
-                implementation libs.kfsm.viz
             }
         }
         jvmTest {
             dependencies {
                 implementation libs.kotlin.test.junit5
                 implementation libs.kfsm.viz
+                implementation libs.kotlinx.coroutines.jvm
             }
         }
     }
@@ -279,9 +283,50 @@ project.afterEvaluate {
     } else {
         def dotFile = new File('/usr/bin/dot')
         if (!dotFile.exists()) {
-            dotFile = Files.walk(Path.of('/')).filter { Files.isRegularFile(it) }.map { it.normalize().toFile() }.filter {it.name == 'dot' }.findFirst().orElse(null)
+            def visitor = new SimpleFileVisitor<java.nio.file.Path>() {
+                @Override
+                public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) {
+                    if(file.toFile().name == "dot") {
+                        dotFile = file.normalize().toFile()
+                        return FileVisitResult.TERMINATE
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult preVisitDirectory(java.nio.file.Path dir, BasicFileAttributes attrs) {
+                    // Continue into the directory
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(java.nio.file.Path file, IOException exc) {
+                    if (exc instanceof AccessDeniedException) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    } else {
+                        return FileVisitResult.CONTINUE;
+                    }
+                }
+
+                @Override
+                FileVisitResult postVisitDirectory(java.nio.file.Path dir, IOException exc) throws IOException {
+                    if (exc instanceof AccessDeniedException) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    } else {
+                        return FileVisitResult.CONTINUE;
+                    }
+                }
+            }
+            logger.lifecycle("searching for dot from /")
+            Files.walkFileTree(java.nio.file.Path.of('/'), Set<FileVisitor>.of(), 5, visitor)
+            if(dotFile == null) {
+                logger.lifecycle("searching for dot from ${java.nio.file.Path.of('.').normalize().toFile().absoluteFile}")
+                Files.walkFileTree(java.nio.file.Path.of('.'), Set<FileVisitor>.of(), 5, visitor)
+            }
             if(dotFile == null || !dotFile.exists()) {
                 logger.warn("GRAPHVIZ_DOT env var not found and dot not found")
+            } else {
+                logger.lifecycle("dot:$dotFile")
             }
         }
     }
