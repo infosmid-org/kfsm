@@ -296,7 +296,7 @@ project.afterEvaluate {
                 @Override
                 public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) {
                     def found = file.normalize().toFile()
-                    if(found.name == "dot" && found.executable) {
+                    if(found.name == "dot" && found.canExecute()) {
                         dotFile = found
                         return FileVisitResult.TERMINATE
                     }

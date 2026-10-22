@@ -26,7 +26,6 @@ jobs:
       - name: Build, test
         run: ./gradlew build
   test-macos:
-    needs: snapshot
     permissions:
       packages: read
       contents: read
