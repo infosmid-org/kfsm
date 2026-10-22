@@ -62,6 +62,6 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Build and publish to GitHub Packages
-        run: ./gradlew assemble publishMavenPublicationToGitHubPackagesRepository
+        run: ./gradlew assemble publishAllPublicationsToGitHubPackagesRepository
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

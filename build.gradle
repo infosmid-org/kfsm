@@ -234,7 +234,6 @@ kotlin {
             dependencies {
                 implementation libs.kotlin.test.junit5
                 implementation libs.kfsm.viz
-                implementation libs.kotlinx.coroutines.jvm
             }
         }
     }
