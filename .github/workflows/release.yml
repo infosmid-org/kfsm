@@ -39,7 +39,7 @@ jobs:
     # Optional: add required reviewers to this environment for a manual approval step.
     environment: maven-central
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
       - uses: actions/checkout@v7
