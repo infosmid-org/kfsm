@@ -5,10 +5,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-concurrency:
-  group: publish-snapshot
-  cancel-in-progress: true
-
 jobs:
   snapshot:
     runs-on: ubuntu-latest
@@ -18,8 +14,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-      - name: Setup Graphviz
-        uses: ts-graphviz/setup-graphviz@v2
+#      - name: Setup Graphviz
+#        uses: ts-graphviz/setup-graphviz@v2
       - name: Setup Java
         uses: actions/setup-java@v6
         with:
@@ -57,8 +53,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-      - name: Setup Graphviz
-        uses: ts-graphviz/setup-graphviz@v2
+#      - name: Setup Graphviz
+#        uses: ts-graphviz/setup-graphviz@v2
       - name: Setup Java
         uses: actions/setup-java@v6
         with:
