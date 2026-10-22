@@ -52,7 +52,7 @@ plugins {
     id 'maven-publish'
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.asciidoctorj)
-    alias(libs.plugins.asciidoctorjGems)
+//    alias(libs.plugins.asciidoctorjGems)
     alias(libs.plugins.kfsm.viz)
 }
 
@@ -88,9 +88,9 @@ repositories {
     }
     google()
     mavenCentral()
-    ruby {
-        gems()
-    }
+//    ruby {
+//        gems()
+//    }
 }
 
 def getVersionFromFile() {
@@ -115,7 +115,7 @@ configurations.all {
 }
 
 dependencies {
-    asciidocGemsAsciidoctorj libs.asciidoctor.tabs
+//    asciidocGemsAsciidoctorj libs.asciidoctor.tabs
     plantuml libs.plantuml
 
 }

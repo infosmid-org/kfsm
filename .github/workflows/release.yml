@@ -61,7 +61,7 @@ jobs:
       - name: Build and test
         run: ./gradlew build -PreleaseVersion=${{ steps.version.outputs.version }}
       - name: Sign and publish to Maven Central and Github Packages
-        run: ./gradlew publishMavenPublicationToGitHubPackagesRepository publishAndReleaseToMavenCentral -PreleaseVersion=${{ steps.version.outputs.version }}
+        run: ./gradlew publishAllPublicationsToGitHubPackagesRepository publishAndReleaseToMavenCentral -PreleaseVersion=${{ steps.version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.CENTRAL_TOKEN_USERNAME }}

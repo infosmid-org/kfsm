@@ -29,7 +29,9 @@ asciidoc {
     }
 }
 
-task docs(type: Zip, dependsOn: ['asciidoctorHtml', 'dokkaGeneratePublicationHtml']) {
+tasks.register('docs', Zip) {
+    dependsOn 'asciidoctorHtml'
+    dependsOn 'dokkaGeneratePublicationHtml'
     archiveBaseName = project.name
     archiveClassifier = 'doc'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
