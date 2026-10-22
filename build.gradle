@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinTest
 
 import java.nio.file.Files
+import java.nio.file.Path
 
 buildscript {
     repositories {
