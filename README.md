@@ -5,16 +5,16 @@ This work is licensed under [Apache License 2.0](https://www.apache.org/licenses
 This is a small implementation of an FSM in Kotlin.
 
 ## Resources
-* [Documentation](https://open.jumpco.io/projects/kfsm/index.html)
-* [API Docs](https://open.jumpco.io/projects/kfsm/javadoc/index.html)
-* [Visualization Support kfsm-io.jumpco.open.kfsm.viz](https://github.com/open-jumpco/kfsm-viz)
-* [Sample Project](https://github.com/open-jumpco/kfsm-samples)
-* [Turnstile Sample for Browser](https://github.com/open-jumpco/kfsm-web)
-* [Turnstile Sample with KVision for Browser](https://github.com/open-jumpco/kfsm-kvision-web)
-* [Turnstile Sample for Android](https://github.com/open-jumpco/kfsm-android)
-* [Turnstile Sample for Spring MVC](https://github.com/open-jumpco/kfsm-spring)
-* [Turnstile Sample for Spring HATEOAS](https://github.com/open-jumpco/kfsm-spring-rest)
-* [Traffic Intersection for Android Compose](https://github.com/open-jumpco/kfsm-android-compose-traffic)
+* [Documentation](https://infosmid.org/projects/kfsm/index.html)
+* [API Docs](https://infosmid.org/projects/kfsm/javadoc/index.html)
+* [Visualization Support org.infosmid.kfsm-viz](https://github.com/infosmid-org/kfsm-viz)
+* [Sample Project](https://github.com/infosmid-org/kfsm-samples)
+* [Turnstile Sample for Browser](https://github.com/infosmid-org/kfsm-web)
+* [Turnstile Sample with KVision for Browser](https://github.com/infosmid-org/kfsm-kvision-web)
+* [Turnstile Sample for Android](https://github.com/infosmid-org/kfsm-android)
+* [Turnstile Sample for Spring MVC](https://github.com/infosmid-org/kfsm-spring)
+* [Turnstile Sample for Spring HATEOAS](https://github.com/infosmid-org/kfsm-spring-rest)
+* [Traffic Intersection for Android Compose](https://github.com/infosmid-org/kfsm-android-compose-traffic)
 
 ## Getting Started
 
@@ -50,7 +50,7 @@ The state machine implementation supports events triggering transitions from one
 * [corneil](http://github.com/corneil)
 
 ## Star History
-[![Star History](https://api.star-history.com/svg?repos=open-jumpco/kfsm&type=Date)](https://star-history.com/#open-jumpco/kfsm&Date)
+[![Star History](https://api.star-history.com/svg?repos=infosmid-org/kfsm&type=Date)](https://star-history.com/#infosmid-org/kfsm&Date)
 
 ## Quick Tutorial
 This is the classic turnstile FSM model from [SMC](http://smc.sourceforge.net/)
@@ -207,14 +207,14 @@ This model means the FSM can be instantiated as needed if the context has values
 
 The FSM can derive the formal state from the value(s) of properties of the context.
 
-The [Documentation](https://open.jumpco.io/projects/kfsm/index.html) contains more detail on creating finite state machine implementations.
+The [Documentation](https://infosmid.org/projects/kfsm/index.html) contains more detail on creating finite state machine implementations.
 
 The documentation contains examples for:
 
-* [Turnstile providing for coin values.](https://open.jumpco.io/projects/kfsm/index.html#advanced-features)
-* [Secure turnstile with card and override.](https://open.jumpco.io/projects/kfsm/index.html#secure-turnstile-example)
-* [Packet Reader example.](https://open.jumpco.io/projects/kfsm/index.html#packet-reader-example)
-* [ImmutableLock and FSM.](https://open.jumpco.io/projects/kfsm/index.html#immutable-context-example)
+* [Turnstile providing for coin values.](https://infosmid.org/projects/kfsm/index.html#advanced-features)
+* [Secure turnstile with card and override.](https://infosmid.org/projects/kfsm/index.html#secure-turnstile-example)
+* [Packet Reader example.](https://infosmid.org/projects/kfsm/index.html#packet-reader-example)
+* [ImmutableLock and FSM.](https://infosmid.org/projects/kfsm/index.html#immutable-context-example)
 
 ### Repository
 
@@ -234,7 +234,7 @@ The dependency used in common modules.
 
 ```groovy
 dependencies {
-    implementation 'io.jumpco.open:kfsm:1.9.0-RC1'
+    implementation 'org.infosmid:kfsm:2.0.0'
 }
 ```
 
@@ -242,7 +242,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'io.jumpco.open:kfsm-jvm:1.9.0-RC1'
+    implementation 'org.infosmid:kfsm-jvm:2.0.0'
 }
 ```
 
@@ -250,7 +250,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'io.jumpco.open:kfsm-js:1.9.0-RC1'
+    implementation 'org.infosmid:kfsm-js:2.0.0'
 }
 ```
 
@@ -258,7 +258,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'io.jumpco.open:kfsm-linuxX64:1.9.0-RC1'
+    implementation 'org.infosmid:kfsm-linuxX64:2.0.0'
 }
 ```
 
@@ -266,7 +266,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'io.jumpco.open:kfsm-mingwX64:1.9.0-RC1'
+    implementation 'org.infosmid:kfsm-mingwX64:2.0.0'
 }
 ```
 
@@ -274,38 +274,38 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'io.jumpco.open:kfsm-macosX64:1.9.0-RC1'
+    implementation 'org.infosmid:kfsm-macosX64:2.0.0'
 }
 ```
 
 ## Visualisation
 
-For more information about visualization options use [kfsm-io.jumpco.open.kfsm.viz](https://github.com/open-jumpco/kfsm-viz)
+For more information about visualization options use [org.infosmid:kfsm-viz](https://github.com/infosmid-org/kfsm-viz)
 
 
 ### Plantuml Examples
 
 #### Turnstile FSM
 
-[TurnstileTypes.kt](./src/commonTest/kotlin/io/jumpco/open/kfsm/example/TurnstileTypes.kt)
+[TurnstileTypes.kt](./src/commonTest/kotlin/org/infosmidkfsm/example/TurnstileTypes.kt)
 
 ![](turnstile.png)
 
 #### Paying Turnstile FSM
 
-[PayingTurnstileTypes.kt](./src/commonTest/kotlin/io/jumpco/open/kfsm/example/PayingTurnstileTypes.kt)
+[PayingTurnstileTypes.kt](./src/commonTest/kotlin/org/infosmidkfsm/example/PayingTurnstileTypes.kt)
 
 ![](paying_turnstile.png)
 
 #### Secure Turnstile FSM
 
-[SecureTurnstile.kt](./src/commonTest/kotlin/io/jumpco/open/kfsm/example/SecureTurnstile.kt)
+[SecureTurnstile.kt](./src/commonTest/kotlin/org/infosmidkfsm/example/SecureTurnstile.kt)
 
 ![](secure_turnstile.png)
 
 #### Packer Reader FSM
 
-[PacketReaderTests.kt](./src/jvmTest/kotlin/io/jumpco/open/kfsm/example/PacketReaderTests.kt)
+[PacketReaderTests.kt](./src/jvmTest/kotlin/org/infosmidkfsm/example/PacketReaderTests.kt)
 
 ![](packet_reader.png)
 

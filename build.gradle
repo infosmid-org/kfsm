@@ -1,179 +1,250 @@
-import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinMultiplatform
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinTest
+
+import java.nio.file.Files
+
 buildscript {
     repositories {
         mavenLocal()
-        maven { url = 'https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental' }
-        maven { url = 'https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven' }
+        maven {
+            content {
+                includeGroupAndSubgroups 'org.infosmid'
+            }
+            name = "GitHubPackages-kfsm-viz"
+            // Replace ORG_NAME with your GitHub Organization name
+            url = uri("https://maven.pkg.github.com/infosmid-org/kfsm-viz")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR") ?: rootProject.findProperty('github.user')
+                password = System.getenv("GITHUB_TOKEN") ?: rootProject.findProperty('github.token')
+            }
+        }
+        maven {
+            content {
+                includeGroupAndSubgroups 'org.infosmid.plugins'
+            }
+            name = "GitHubPackages-kfsm-viz-plugin"
+            // Replace ORG_NAME with your GitHub Organization name
+            url = uri("https://maven.pkg.github.com/infosmid-org/kfsm-viz-plugin")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR") ?: rootProject.findProperty('github.user')
+                password = System.getenv("GITHUB_TOKEN") ?: rootProject.findProperty('github.token')
+            }
+        }
+        google()
         gradlePluginPortal()
         mavenCentral()
-    }
-    dependencies {
-        classpath 'org.jetbrains.kotlinx:kotlinx-html-jvm:0.11.0'
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.25'
-        classpath 'org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.23.2'
+
     }
 }
 
 plugins {
-    id 'org.jetbrains.kotlin.multiplatform' version '1.9.25'
-    id 'org.jetbrains.dokka' version '1.9.20'
+    alias(libs.plugins.local.properties)
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
+    alias(libs.plugins.dokka)
     id 'maven-publish'
-    // id 'signing'
-    id 'org.asciidoctor.jvm.convert' version '4.0.2'
-    id 'org.asciidoctor.jvm.gems' version '4.0.4'
-    id 'com.cosminpolifronie.gradle.plantuml' version '1.6.0'
-    id 'io.jumpco.open.kfsm.viz-plugin' version '1.5.2.4'
-    // id 'org.jetbrains.qodana' version '2023.3.1'
+    alias(libs.plugins.maven.publish)
+    alias(libs.plugins.asciidoctorj)
+    alias(libs.plugins.asciidoctorjGems)
+    alias(libs.plugins.kfsm.viz)
 }
-def kotlinVersion = '1.9.25'
+
 repositories {
-    mavenLocal()
+    mavenLocal {
+        content {
+            includeGroupAndSubgroups('org.infosmid')
+        }
+    }
+    maven {
+        content {
+            includeGroupAndSubgroups('org.infosmid')
+        }
+        name = "GitHubPackages-kfsm-viz"
+        // Replace ORG_NAME with your GitHub Organization name
+        url = uri("https://maven.pkg.github.com/infosmid-org/kfsm-viz")
+        credentials {
+            username = System.getenv("GITHUB_ACTOR") ?: rootProject.findProperty('github.user')
+            password = System.getenv("GITHUB_TOKEN") ?: rootProject.findProperty('github.token')
+        }
+    }
+    maven {
+        content {
+            includeGroupAndSubgroups('org.infosmid.plugins')
+        }
+        name = "GitHubPackages-kfsm-viz-plugin"
+        // Replace ORG_NAME with your GitHub Organization name
+        url = uri("https://maven.pkg.github.com/infosmid-org/kfsm-viz-plugin")
+        credentials {
+            username = System.getenv("GITHUB_ACTOR") ?: rootProject.findProperty('github.user')
+            password = System.getenv("GITHUB_TOKEN") ?: rootProject.findProperty('github.token')
+        }
+    }
+    google()
     mavenCentral()
-    maven { url = 'https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental' }
-    maven { url = 'https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven' }
-    maven { url = 'https://maven.pkg.jetbrains.space/kotlin/p/kotlin/temporary' }
     ruby {
         gems()
     }
 }
 
-group = 'io.jumpco.open'
-version = '1.9.0-SNAPSHOT'
-description = 'Kotlin Finite-state machine'
+def getVersionFromFile() {
+    def versionFile = new File(rootProject.projectDir, 'version.txt')
+    return versionFile.text.trim()
+}
+
+group = 'org.infosmid'
+version = providers.gradleProperty('releaseVersion').getOrNull() ?: getVersionFromFile()
+description = 'Kotlin Finite-state machine with DSL'
+
+configurations {
+    plantuml
+}
 
 dependencies {
-    asciidoctorGems 'rubygems:asciidoctor-tabs:v1.0.0-beta.6'
+    asciidocGemsAsciidoctorj libs.asciidoctor.tabs
+    plantuml libs.plantuml
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
-
-apply plugin: 'kotlinx-atomicfu'
-apply from: "$rootProject.projectDir/gradle/platform.gradle"
 apply from: "$rootProject.projectDir/gradle/docs.gradle"
-apply from: "$rootProject.projectDir/gradle/publish.gradle"
 
-def useTarget = project.ext.useTarget
-def arch = DefaultNativePlatform.currentArchitecture
-def os = DefaultNativePlatform.currentOperatingSystem;
+publishing {
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri("https://maven.pkg.github.com/infosmid-org/${rootProject.name}")
+            credentials {
+                username = providers.environmentVariable('GITHUB_ACTOR').getOrElse('')
+                password = providers.environmentVariable('GITHUB_TOKEN').getOrElse('')
+            }
+        }
+    }
+}
+
+mavenPublishing {
+    configure(new KotlinMultiplatform(new JavadocJar.Dokka('dokkaGeneratePublicationHtml')))
+    publishToMavenCentral()
+    if (providers.gradleProperty('signingInMemoryKey').isPresent()) {
+        signAllPublications()
+    }
+    coordinates(project.group.toString(), rootProject.name, project.version.toString())
+    pom {
+        name = 'KFSM'
+        description = project.description
+        inceptionYear = '2019'
+        url = "https://github.com/infosmid-org/${rootProject.name}"
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution = 'repo'
+            }
+        }
+        developers {
+            developer {
+                id = 'corneil'
+                name = 'Corneil du Plessis'
+                url = 'https://github.com/corneil'
+            }
+        }
+        scm {
+            url = "https://github.com/infosmid-org/${rootProject.name}"
+            connection = "scm:git:git://github.com/infosmid-org/${rootProject.name}.git"
+            developerConnection = "scm:git:ssh://git@github.com/infosmid-org/${rootProject.name}.git"
+        }
+        issueManagement {
+            system = 'GitHub'
+            url = "https://github.com/infosmid-org/${rootProject.name}/issues"
+        }
+    }
+}
 
 kotlin {
+    jvmToolchain(17)
+
+    jvm {
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_11
+        }
+    }
+    android {
+        namespace = 'org.infosmid.kfsm'
+        compileSdk = 36
+        minSdk = 21
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_11
+        }
+        withHostTest {}
+    }
+    iosArm64()
+    iosSimulatorArm64()
+    macosArm64()
+    wasmJs {
+        browser {
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                }
+            }
+        }
+        nodejs()
+    }
+    wasmWasi {
+        nodejs()
+    }
+    js {
+        browser()
+        nodejs()
+    }
     sourceSets {
         configureEach {
             languageSettings.optIn("kotlin.RequiresOptIn")
         }
         commonMain {
             dependencies {
-                api 'org.jetbrains.kotlin:kotlin-stdlib'
-                api 'org.jetbrains.kotlin:kotlin-reflect'
-                api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0'
+                api libs.kotlinx.coroutines.core
             }
         }
         commonTest {
             dependencies {
-                implementation 'org.jetbrains.kotlin:kotlin-test'
-                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0'
+                implementation libs.kotlin.test
+                implementation libs.kotlinx.coroutines.test
             }
         }
-        if (useTarget['jvm']) {
-            jvmMain {
-                dependencies {
-                    implementation 'io.jumpco.open:kfsm-viz:1.5.2.4'
-                    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
-                    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0'
-                }
-            }
-            jvmTest {
-                dependencies {
-                    implementation 'org.jetbrains.kotlin:kotlin-test-junit5'
-                    implementation 'io.jumpco.open:kfsm-viz:1.5.2.4'
-                    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
-                    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0'
-                }
+        jvmMain {
+            dependencies {
+                api libs.kotlin.reflect
+                implementation libs.kfsm.viz
             }
         }
-        if (useTarget['js']) {
-            jsTest {
-                dependencies {
-                    implementation 'org.jetbrains.kotlin:kotlin-stdlib-js'
-                    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.8.0'
-                }
-            }
-        }
-        if (useTarget['wasm-js']) {
-            wasmJsTest {
-                dependencies {
-                    implementation 'org.jetbrains.kotlin:kotlin-stdlib-wasm'
-                    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-wasm-js:1.8.0'
-                }
-            }
-        }
-        if (useTarget['linux']) {
-            if (arch.amd64) {
-                linuxX64Test {
-                    dependencies {
-                        implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-linuxx64:1.8.0'
-                    }
-                }
-            }
-            if (arch.arm64) {
-                linuxArm64 {
-                    dependencies {
-                        implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-linuxarm64:1.8.0'
-                    }
-                }
-            }
-        }
-        if (useTarget['macos']) {
-            if (arch.amd64) {
-                macosX64 {
-                    dependencies {
-                        implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-macosx64:1.8.0'
-                    }
-                }
-            }
-            if (arch.arm64) {
-                macosArm64 {
-                    dependencies {
-                        implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-macosarm64:1.8.0'
-                    }
-                }
+        jvmTest {
+            dependencies {
+                implementation libs.kotlin.test.junit5
+                implementation libs.kfsm.viz
             }
         }
     }
 }
 
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
 tasks.withType(KotlinTest).configureEach {
     reports.junitXml.required = true
 }
 
-def rootDir = rootProject.projectDir.path
-
-if('true' == project.findProperty('dokka')) {
-    logger.lifecycle("dokkaHtml")
-    dokkaHtml {
-        dokkaSourceSets {
-            configureEach {
-                samples.from(
-                    "$rootDir/src/commonTest/kotlin/io/jumpco/open/kfsm/example/TurnstileTypes.kt",
-                    "$rootDir/src/commonTest/kotlin/io/jumpco/open/kfsm/example/ImmutableLockFSM.kt",
-                    "$rootDir/src/commonTest/kotlin/io/jumpco/open/kfsm/example/LockTypes.kt",
-                    "$rootDir/src/commonTest/kotlin/io/jumpco/open/kfsm/example/PayingTurnstileTypes.kt",
-                    "$rootDir/src/commonTest/kotlin/io/jumpco/open/kfsm/example/SecureTurnstile.kt"
-                )
-            }
-        }
-        inputs.dir('src/commonTest/kotlin')
+dokka {
+    // Samples may belong to only one source set
+    dokkaSourceSets.matching { it.name == 'jvm' }.configureEach {
+        samples.from(
+            'src/commonTest/kotlin/org/infosmid/kfsm/example/TurnstileTypes.kt',
+            'src/commonTest/kotlin/org/infosmid/kfsm/example/ImmutableLockFSM.kt',
+            'src/commonTest/kotlin/org/infosmid/kfsm/example/LockTypes.kt',
+            'src/commonTest/kotlin/org/infosmid/kfsm/example/PayingTurnstileTypes.kt',
+            'src/commonTest/kotlin/org/infosmid/kfsm/example/SecureTurnstile.kt'
+        )
     }
-} else {
-    dokkaHtml.onlyIf { false }
 }
-dokkaJavadoc.onlyIf { false }
-dokkaJekyll.onlyIf { false }
-dokkaGfm.onlyIf { false }
 
 tasks.register('copyPng', Copy) {
     from(projectDir) {
@@ -182,11 +253,20 @@ tasks.register('copyPng', Copy) {
     into "${layout.buildDirectory.asFile.get()}/docs/asciidoc"
 }
 
-asciidoctor.dependsOn('copyPng')
 
-plantUml {
-    render input: 'src/docs/plantuml/*.plantuml', output: 'src/docs/asciidoc', format: 'png', withMetadata: false
+
+tasks.register('renderPlantUml', JavaExec) {
+    description = 'Render src/docs/plantuml/*.plantuml to PNG in src/docs/asciidoc'
+    def input = fileTree('src/docs/plantuml') { include '*.plantuml' }
+    def output = file('src/docs/asciidoc')
+    inputs.files(input)
+    outputs.dir(output)
+    classpath = configurations.plantuml
+    mainClass = 'net.sourceforge.plantuml.Run'
+    args(['-tpng', '-o', output.absolutePath] + input.files.collect { it.absolutePath })
 }
+
+asciidoctorHtml.dependsOn('copyPng')
 
 project.afterEvaluate {
     def envVar = System.getenv('GRAPHVIZ_DOT')
@@ -198,7 +278,10 @@ project.afterEvaluate {
     } else {
         def dotFile = new File('/usr/bin/dot')
         if (!dotFile.exists()) {
-            logger.warn("GRAPHVIZ_DOT env var not found")
+            dotFile = Files.walk(Path.of('/')).filter { Files.isRegularFile(it) }.map { it.normalize().toFile() }.filter {it.name == 'dot' }.findFirst().orElse(null)
+            if(dotFile == null || !dotFile.exists()) {
+                logger.warn("GRAPHVIZ_DOT env var not found and dot not found")
+            }
         }
     }
 }
@@ -209,14 +292,14 @@ docs.dependsOn('generateFsmViz')
 kfsmViz {
     fsm('TurnstileFSM') {
         outputFolder = file('generated')
-        input = file('src/commonTest/kotlin/io/jumpco/open/kfsm/example/TurnstileTypes.kt')
+        input = file('src/commonTest/kotlin/org/infosmid/kfsm/example/TurnstileTypes.kt')
         isGeneratePlantUml = true
         isGenerateAsciidoc = true
         output = 'turnstile-detail'
     }
     fsm('PayingTurnstileFSM') {
         outputFolder = file('generated')
-        input = file('src/commonTest/kotlin/io/jumpco/open/kfsm/example/PayingTurnstileTypes.kt')
+        input = file('src/commonTest/kotlin/org/infosmid/kfsm/example/PayingTurnstileTypes.kt')
         isGeneratePlantUml = true
         isGenerateAsciidoc = true
         output = 'paying-turnstile-detail'
@@ -224,7 +307,7 @@ kfsmViz {
 
     fsm('SecureTurnstileFSM') {
         outputFolder = file('generated')
-        input = file('src/commonTest/kotlin/io/jumpco/open/kfsm/example/SecureTurnstile.kt')
+        input = file('src/commonTest/kotlin/org/infosmid/kfsm/example/SecureTurnstile.kt')
         isGeneratePlantUml = true
         isGenerateAsciidoc = true
         output = 'secure-turnstile-detail'
@@ -232,14 +315,14 @@ kfsmViz {
 
     fsm('TimerSecureTurnstileFSM') {
         outputFolder = file('generated')
-        input = file('src/commonTest/kotlin/io/jumpco/open/kfsm/example/TimeoutSecureTurnstile.kt')
+        input = file('src/commonTest/kotlin/org/infosmid/kfsm/example/TimeoutSecureTurnstile.kt')
         isGeneratePlantUml = true
         isGenerateAsciidoc = true
         output = 'timeout-turnstile-detail'
     }
     fsm('PacketReaderFSM') {
         outputFolder = file('generated')
-        input = file('src/commonTest/kotlin/io/jumpco/open/kfsm/example/PacketReaderTests.kt')
+        input = file('src/commonTest/kotlin/org/infosmid/kfsm/example/PacketReaderTests.kt')
         isGeneratePlantUml = true
         isGenerateAsciidoc = true
         output = 'packet-reader-detail'

@@ -19,7 +19,7 @@ The <<Tutorial>> provides examples of how to compose a DSL and FSM.
 
 === link:javadoc/kfsm/index.html[API Docs]
 
-=== link:https://github.com/open-jumpco/kfsm[Source]
+=== link:https://github.com/infosmid-org/kfsm[Source]
 
 == Features
 

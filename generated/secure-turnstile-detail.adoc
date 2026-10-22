@@ -10,8 +10,8 @@
 | LOCKED
 a| 
 
-| LOCKED
-| CARD `[{cardId->requireNotNull(cardId);isOverrideCard(cardId)&&overrideActive;}]`
+| OVERRIDE
+| CARD `[{cardId->requireNotNull(cardId);isOverrideCard(cardId);}]`
 | LOCKED
 a| [source,kotlin]
 ----
@@ -20,9 +20,31 @@ cancelOverride()
 }
 ----
 
+| OVERRIDE
+| CARD `[{cardId->requireNotNull(cardId);!isValidCard(cardId);}]`
+| UNLOCKED
+a| [source,kotlin]
+----
+{cardId->
+println("Allowed invalid card:$cardId")
+unlock()
+}
+----
+
+| OVERRIDE
+| CARD `[{cardId->requireNotNull(cardId);isValidCard(cardId);}]`
+| UNLOCKED
+a| [source,kotlin]
+----
+{cardId->
+println("Allowing valid card:${cardId}")
+unlock()
+}
+----
+
 | LOCKED
 | CARD `[{cardId->requireNotNull(cardId);isOverrideCard(cardId);}]`
-| LOCKED
+| OVERRIDE
 a| [source,kotlin]
 ----
 {
@@ -31,7 +53,7 @@ activateOverride()
 ----
 
 | LOCKED
-| CARD `[{cardId->requireNotNull(cardId);overrideActive\|\|isValidCard(cardId);}]`
+| CARD `[{cardId->requireNotNull(cardId);isValidCard(cardId);}]`
 | UNLOCKED
 a| [source,kotlin]
 ----

@@ -24,7 +24,7 @@ repositories {
 [source,groovy]
 ----
 dependencies {
-    implementation 'io.jumpco.open:kfsm-jvm:1.9.0'
+    implementation 'org.infosmid:kfsm-jvm:2.0.0'
 }
 ----
 
@@ -33,7 +33,7 @@ dependencies {
 [source,kotlin]
 ----
 dependencies {
-    implementation("io.jumpco.open:kfsm-jvm:1.9.0")
+    implementation("org.infosmid:kfsm-jvm:2.0.0")
 }
 ----
 
@@ -44,7 +44,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    implementation 'io.jumpco.open:kfsm-js:1.9.0'
+    implementation 'org.infosmid:kfsm-js:2.0.0'
 }
 ----
 
@@ -53,7 +53,7 @@ dependencies {
 [source,kotlin]
 ----
 dependencies {
-    implementation("io.jumpco.open:kfsm-js:1.9.0")
+    implementation("org.infosmid:kfsm-js:2.0.0")
 }
 ----
 
@@ -64,7 +64,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    implementation 'io.jumpco.open:kfsm-linuxX64:1.9.0'
+    implementation 'org.infosmid:kfsm-linuxX64:2.0.0'
 }
 ----
 
@@ -73,7 +73,7 @@ dependencies {
 [source,kotlin]
 ----
 dependencies {
-    implementation("io.jumpco.open:kfsm-linuxX64:1.9.0")
+    implementation("org.infosmid:kfsm-linuxX64:2.0.0")
 }
 ----
 
@@ -84,7 +84,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    implementation 'io.jumpco.open:kfsm-mingwX64:1.9.0'
+    implementation 'org.infosmid:kfsm-mingwX64:2.0.0'
 }
 ----
 
@@ -93,7 +93,7 @@ dependencies {
 [source,kotlin]
 ----
 dependencies {
-    implementation("io.jumpco.open:kfsm-mingwX64:1.9.0")
+    implementation("org.infosmid:kfsm-mingwX64:2.0.0")
 }
 ----
 
@@ -104,7 +104,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    implementation 'io.jumpco.open:kfsm-macosX64:1.9.0'
+    implementation 'org.infosmid:kfsm-macosX64:2.0.0'
 }
 ----
 
@@ -113,7 +113,7 @@ dependencies {
 [source,kotlin]
 ----
 dependencies {
-    implementation("io.jumpco.open:kfsm-macosX64:1.9.0")
+    implementation("org.infosmid:kfsm-macosX64:2.0.0")
 }
 ----
 
@@ -196,14 +196,14 @@ The statemachine supports:
 * Actions as `suspend` functions.
 * State machine `invariant` will be evaluated on all events and throw an `InvariantException` if not true
 
-All configuration calls are eventually applied to link:javadoc/kfsm/io.jumpco.open.kfsm/-state-machine-builder/index.html[StateMachineBuilder]
+All configuration calls are eventually applied to link:javadoc/kfsm/org.infosmid.kfsm/-state-machine-builder/index.html[StateMachineBuilder]
 
 === `stateMachine`
 
 The top level element is `stateMachine` either by using the function
 
-* link:javadoc/kfsm/io.jumpco.open.kfsm/-state-machine-builder/state-machine.html[StateMachineBuilder::stateMachine]
-* link:javadoc/kfsm/io.jumpco.open.kfsm/state-machine.html[stateMachine]
+* link:javadoc/kfsm/org.infosmid.kfsm/-state-machine-builder/state-machine.html[StateMachineBuilder::stateMachine]
+* link:javadoc/kfsm/org.infosmid.kfsm/state-machine.html[stateMachine]
 
 There are 3 overloaded variations on `stateMachine` for providing `Any` as the return type and the argument to events/actions in cases where they are not used.
 
@@ -239,7 +239,7 @@ val definition = stateMachine(
 
 The top level element is `functionalStateMachine` either by using the function
 
-* link:javadoc/kfsm/io.jumpco.open.kfsm/functional-state-machine.html[functionalStateMachine]
+* link:javadoc/kfsm/org.infosmid.kfsm/functional-state-machine.html[functionalStateMachine]
 
 It provides the same as `stateMachine` but in this case the Context, argument and return types are all the same.
 
@@ -275,8 +275,8 @@ This method provides for creating a statemachine definition and instances that h
 This also adds the support for `timeout` on the state map handler.
 Creating an instance of an asyncStateMachine from a definition requires providing a `CoroutineScope`.
 
-* link:javadoc/kfsm/io.jumpco.open.kfsm.async/async-state-machine.html[asyncStateMachine]
-* link:javadoc/kfsm/io.jumpco.open.kfsm.async/-async-state-machine-builder/state-machine.html
+* link:javadoc/kfsm/org.infosmid.kfsm.async/async-state-machine.html[asyncStateMachine]
+* link:javadoc/kfsm/org.infosmid.kfsm.async/-async-state-machine-builder/state-machine.html
 
 There are 3 overloaded variations on `stateMachine` for providing `Any` as the return type and the argument to events/actions in cases where they are not used.
 
@@ -312,7 +312,7 @@ val definition = asyncStateMachine(
 
 This is the same as `asyncStateMachine` except that Context, argument and return types are all the same.
 
-* link:javadoc/kfsm/io.jumpco.open.kfsm.async/async-functional-state-machine.html[asyncFunctionalStateMachine]
+* link:javadoc/kfsm/org.infosmid.kfsm.async/async-functional-state-machine.html[asyncFunctionalStateMachine]
 
 [source,kotlin,numbered]
 ----
@@ -342,7 +342,7 @@ val definition = asyncFunctionalStateMachine(
 
 === `default`
 
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-machine-handler/default.html[DslStateMachineHandler::default]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-machine-handler/default.html[DslStateMachineHandler::default]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
@@ -366,7 +366,7 @@ default {
 
 ==== `action`
 
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-default-event-handler/action.html[DslStateMachineDefaultEventHandler::action]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-default-event-handler/action.html[DslStateMachineDefaultEventHandler::action]
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
@@ -384,7 +384,7 @@ action { currentState, event, arg -> // global default action
 
 ==== `onEntry`
 
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-default-event-handler/on-entry.html[DslStateMachineDefaultEventHandler::onEntry]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-default-event-handler/on-entry.html[DslStateMachineDefaultEventHandler::onEntry]
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
@@ -402,7 +402,7 @@ onEntry { fromState, targetState, arg ->
 
 ==== `onExit`
 
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-default-event-handler/on-exit.html[DslStateMachineDefaultEventHandler::onExit]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-default-event-handler/on-exit.html[DslStateMachineDefaultEventHandler::onExit]
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
@@ -421,7 +421,7 @@ onExit { fromState, targetState, arg ->
 ==== `onEvent`
 
 * Arguments: `(event: E [to targetState: S])`
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-default-event-handler/on-event.html[DslStateMachineDefaultEventHandler::onEvent]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-default-event-handler/on-event.html[DslStateMachineDefaultEventHandler::onEvent]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
@@ -444,7 +444,7 @@ onEvent(Event.EVENT to State.STATE) { arg -> // default external state action fo
 
 === `initialState`
 
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-machine-handler/initial-state.html[DslStateMachineHandler::initialState]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-machine-handler/initial-state.html[DslStateMachineHandler::initialState]
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
@@ -465,7 +465,7 @@ initialState {
 
 === `initialStates`
 
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-machine-handler/initial-states.html[DslStateMachineHandler::initialStates]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-machine-handler/initial-states.html[DslStateMachineHandler::initialStates]
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
@@ -495,7 +495,7 @@ initialStates {
 
 === `onStateChange`
 
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-machine-handler/on-state-change.html[DslStateMachineHandler::onStateChange]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-machine-handler/on-state-change.html[DslStateMachineHandler::onStateChange]
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
@@ -504,7 +504,7 @@ The `onStateChange` handler will be invoked after a transition has complete and 
 === `whenState`
 
 * Arguments: `(currentState: S)`
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-machine-handler/when-state.html[DslStateMachineHandler::whenState]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-machine-handler/when-state.html[DslStateMachineHandler::whenState]
 * Mandatory: _Mandatory_
 * Cardinality: _Multiple_
 
@@ -541,7 +541,7 @@ whenState(State.STATE) {
 
 ==== `default`
 
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-event-handler/default.html[DslStateMachineEventHandler::default]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/default.html[DslStateMachineEventHandler::default]
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
@@ -558,7 +558,7 @@ default { fromState, event, arg -> // default state action
 
 ==== `onEntry`
 
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-event-handler/on-entry.html[DslStateMachineEventHandler::onEntry]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/on-entry.html[DslStateMachineEventHandler::onEntry]
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
@@ -576,7 +576,7 @@ onEntry { fromState, targetState, arg -> // state entry action
 
 ==== `onExit`
 
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-event-handler/on-exit.html[DslStateMachineEventHandler::onExit]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/on-exit.html[DslStateMachineEventHandler::onExit]
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
@@ -594,7 +594,7 @@ onExit { fromState, targetState, arg -> // state exit action
 ==== `automatic`
 
 * Arguments: `(targetState: S [, guard:{}])`
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-event-handler/automatic.html[DslStateMachineDefaultEventHandler::automatic]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/automatic.html[DslStateMachineDefaultEventHandler::automatic]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
@@ -617,7 +617,7 @@ whenState(State.S1) {
 ==== `automaticPop`
 
 * Arguments: `([targetMap: String,][,targetState: S] [, guard:{}])`
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-event-handler/automatic-pop.html[DslStateMachineDefaultEventHandler::automaticPop]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/automatic-pop.html[DslStateMachineDefaultEventHandler::automaticPop]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
@@ -646,7 +646,7 @@ whenState(State.S1) {
 ==== `automaticPush`
 
 * Arguments: `(targetMap: String, targetState: S [, guard:{}])`
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-event-handler/automatic-push.html[DslStateMachineDefaultEventHandler::automaticPush]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/automatic-push.html[DslStateMachineDefaultEventHandler::automaticPush]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
@@ -667,7 +667,7 @@ whenState(State.S1) {
 ==== `onEvent`
 
 * Arguments: `(event: E [to targetState: S],[guard: {}])`
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-event-handler/on-event.html[DslStateMachineEventHandler::onEvent]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/on-event.html[DslStateMachineEventHandler::onEvent]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
@@ -697,7 +697,7 @@ onEvent(Event.EV2 to State.S2) { arg -> // external transition
 ==== `onEventPush`
 
 * Arguments: `(event: E, targetMap: String, targetState: S [, guard:{}])`
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-event-handler/on-event-push.html[DslStateMachineEventHandler::onEventPush]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/on-event-push.html[DslStateMachineEventHandler::onEventPush]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
@@ -716,7 +716,7 @@ whenState(State.S1) {
 ==== `onEventPop`
 
 * Arguments: `(event: E [to targetState: S]|[,targetMap: String, targetState: S], [guard:{}])`
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm/-dsl-state-map-event-handler/on-event-pop.html[DslStateMachineEventHandler::onEventPop]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/on-event-pop.html[DslStateMachineEventHandler::onEventPop]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
@@ -745,7 +745,7 @@ whenState(State.S1) {
 ==== `timeout`
 
 * Arguments: `(targetState: S, timeout: Long, [guard:{}])`
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm.async/-async-dsl-state-map-event-handler/timeout.html[AsyncDslStateMapEventHandler::onEventPop]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm.async/-async-dsl-state-map-event-handler/timeout.html[AsyncDslStateMapEventHandler::onEventPop]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
@@ -755,7 +755,7 @@ One adds the support for a guard expression that will be evaluated and the actio
 ==== `timeoutPop`
 
 * Arguments: `([targetMap: String], targetState: S, timeout: Long, [guard:{}])`
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm.async/-async-dsl-state-map-event-handler/timeout-pop.html[AsyncDslStateMapEventHandler::timeoutPop]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm.async/-async-dsl-state-map-event-handler/timeout-pop.html[AsyncDslStateMapEventHandler::timeoutPop]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
@@ -765,7 +765,7 @@ Combinations exist to add the optional guard expression and the targetMap.
 ==== `timeoutPush`
 
 * Arguments: `(targetMap: String, targetState: S, timeout: Long, [guard:{}])`
-* Handler: link:javadoc/kfsm/io.jumpco.open.kfsm.async/-async-dsl-state-map-event-handler/timeout-push.html[AsyncDslStateMapEventHandler::timeoutPush]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm.async/-async-dsl-state-map-event-handler/timeout-push.html[AsyncDslStateMapEventHandler::timeoutPush]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 

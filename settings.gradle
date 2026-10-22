@@ -1,7 +1,18 @@
 pluginManagement {
     repositories {
         mavenLocal()
-        maven { url = 'https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental' }
+        maven {
+            content {
+                includeGroupAndSubgroups 'org.infosmid.plugins'
+            }
+            name = "GitHubPackages-kfsm-viz-plugin"
+            url = uri("https://maven.pkg.github.com/infosmid-org/kfsm-viz-plugin")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR") ?: settings.providers.gradleProperty('github.user').orNull
+                password = System.getenv("GITHUB_TOKEN") ?: settings.providers.gradleProperty('github.token').orNull
+            }
+        }
+        google()
         gradlePluginPortal()
         mavenCentral()
     }

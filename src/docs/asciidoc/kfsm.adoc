@@ -39,7 +39,7 @@ image::turnstile_detail.png[LockStateDiagram]
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/TurnstileTypes.kt[tag=context]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/TurnstileTypes.kt[tag=context]
 ----
 
 ==== Enums for States and Events
@@ -48,14 +48,14 @@ We declare 2 enums, one for the possible states and one for the possible events.
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/TurnstileTypes.kt[tag=states-events]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/TurnstileTypes.kt[tag=states-events]
 ----
 
 ==== Packaged definition and execution
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/TurnstileTypes.kt[tag=packaged]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/TurnstileTypes.kt[tag=packaged]
 ----
 
 ==== Usage
@@ -87,7 +87,7 @@ fsm.coin()
 // Expect returnCoin() and end state is UNLOCKED
 ----
 
-link:https://github.com/open-jumpco/kfsm-samples[Samples]
+link:https://github.com/infosmid-org/kfsm-samples[Samples]
 
 === Advanced Features
 
@@ -168,14 +168,14 @@ The context class stores values and will update value in very specific ways.
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/PayingTurnstileTypes.kt[tag=context]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/PayingTurnstileTypes.kt[tag=context]
 ----
 
 ==== States and Events
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/PayingTurnstileTypes.kt[tag=states-events]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/PayingTurnstileTypes.kt[tag=states-events]
 ----
 
 We add a stateMap named `coins` with the state `COINS`.
@@ -189,14 +189,14 @@ The `externalState` method provides a list of states for the case where there ar
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/PayingTurnstileTypes.kt[tag=packaged]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/PayingTurnstileTypes.kt[tag=packaged]
 ----
 
 ==== Test
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/PayingTurnstileFsmTests.kt[tag=test]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/PayingTurnstileFsmTests.kt[tag=test]
 ----
 
 ==== Output
@@ -305,28 +305,28 @@ The context will provide information about the state of turnstile and validity o
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/SecureTurnstile.kt[tag=context]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/SecureTurnstile.kt[tag=context]
 ----
 
 ==== States and Events
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/SecureTurnstile.kt[tag=states-events]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/SecureTurnstile.kt[tag=states-events]
 ----
 
 ==== State machine definition packaged
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/SecureTurnstile.kt[tag=fsm]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/SecureTurnstile.kt[tag=fsm]
 ----
 
 ==== Test
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/PayingTurnstileFsmTests.kt[tag=test]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/PayingTurnstileFsmTests.kt[tag=test]
 ----
 
 === Packet Reader Example
@@ -349,28 +349,28 @@ The current checksum is a trivial implementation for the demonstration where the
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/PacketReaderTests.kt[tag=context]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/PacketReaderTests.kt[tag=context]
 ----
 
 ==== States and Events
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/PacketReaderTests.kt[tag=states-events]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/PacketReaderTests.kt[tag=states-events]
 ----
 
 ==== Packaged FSM
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/PacketReaderTests.kt[tag=packaged]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/PacketReaderTests.kt[tag=packaged]
 ----
 
 ==== Tests
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/PacketReaderTests.kt[tag=tests]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/PacketReaderTests.kt[tag=tests]
 ----
 
 === Immutable Context Example
@@ -384,7 +384,7 @@ It returns a copy containing the new context
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/ImmutableLockFSM.kt[tag=context]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/ImmutableLockFSM.kt[tag=context]
 ----
 
 ==== Definition
@@ -393,7 +393,7 @@ The definition only exposes one method to handle an event given a context and re
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/ImmutableLockFSM.kt[tag=definition]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/ImmutableLockFSM.kt[tag=definition]
 ----
 
 ==== Usage
@@ -403,7 +403,7 @@ The provides for a way of signaling the application of event to context.
 
 [source,kotlin]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/ImmutableLockFSM.kt[tag=test]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/ImmutableLockFSM.kt[tag=test]
 ----
 
 In the case where the argument to the state action will be something other than the context you can use a `Pair` and even when the state is needed separately:
@@ -526,28 +526,28 @@ The context will provide information about the state of turnstile and validity o
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/TimeoutSecureTurnstile.kt[tag=context]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/TimeoutSecureTurnstile.kt[tag=context]
 ----
 
 ==== States and Events
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/TimeoutSecureTurnstile.kt[tag=states-events]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/TimeoutSecureTurnstile.kt[tag=states-events]
 ----
 
 ==== State machine definition packaged
 
 [source,kotlin,numbered]
 ----
-include::../../commonTest/kotlin/io/jumpco/open/kfsm/example/TimeoutSecureTurnstile.kt[tag=fsm]
+include::../../commonTest/kotlin/org/infosmid/kfsm/example/TimeoutSecureTurnstile.kt[tag=fsm]
 ----
 
 ==== Test
 
 [source,kotlin,numbered]
 ----
-include::../../jvmTest/kotlin/io/jumpco/open/kfsm/example/TimeoutSecureTurnstileTests.kt[tag=test]
+include::../../jvmTest/kotlin/org/infosmid/kfsm/example/TimeoutSecureTurnstileTests.kt[tag=test]
 ----
 
 === Further thoughts

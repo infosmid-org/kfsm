@@ -113,3 +113,5 @@ hs_err_pid*
 .idea/
 codemr/
 kotlin-js-store/
+local.properties
+/.kotlin/metadata
