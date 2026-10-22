@@ -105,10 +105,19 @@ description = 'Kotlin Finite-state machine with DSL'
 configurations {
     plantuml
 }
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group == 'org.jruby' && details.requested.name == 'jruby-complete') {
+            details.useVersion('9.4.8.0')
+            details.because('Workaround for setJrubyJarProvider incompatibility in JRuby >= 10.1.0.0')
+        }
+    }
+}
 
 dependencies {
     asciidocGemsAsciidoctorj libs.asciidoctor.tabs
     plantuml libs.plantuml
+
 }
 
 apply from: "$rootProject.projectDir/gradle/docs.gradle"
@@ -286,8 +295,9 @@ project.afterEvaluate {
             def visitor = new SimpleFileVisitor<java.nio.file.Path>() {
                 @Override
                 public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) {
-                    if(file.toFile().name == "dot") {
-                        dotFile = file.normalize().toFile()
+                    def found = file.normalize().toFile()
+                    if(found.name == "dot" && found.executable) {
+                        dotFile = found
                         return FileVisitResult.TERMINATE
                     }
                     return FileVisitResult.CONTINUE;
