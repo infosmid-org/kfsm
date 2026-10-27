@@ -1,6 +1,11 @@
 = Kotlin Finite-state machine
 :project-version: 2.0.0
 
+image:https://github.com/infosmid-org/kfsm/actions/workflows/snapshot.yml/badge.svg[Build Status,link=https://github.com/infosmid-org/kfsm/actions/workflows/snapshot.yml]
+image:https://img.shields.io/maven-central/v/org.infosmid/kfsm.svg[Maven Central,link=https://central.sonatype.com/artifact/org.infosmid/kfsm]
+image:https://img.shields.io/badge/License-Apache%202.0-blue.svg[License,link=LICENSE]
+
+
 :toc: left
 :toclevels: 3
 :icons: font
