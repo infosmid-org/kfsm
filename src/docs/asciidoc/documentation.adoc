@@ -2,210 +2,311 @@
 
 === Repository
 
-Use this repository for SNAPSHOT builds.
-Releases are on Maven Central
+Releases are on Maven Central.
+Snapshots are in GitHub Packages.
+Contact us for a personal access token (PAT) to get snapshot releases.
 
-[source,groovy]
+=== Dependencies
+
+kfsm is a Kotlin Multiplatform library.
+The version in the examples is 2.0.0.
+
+==== Kotlin Multiplatform Projects
+
+===== Gradle Kotlin DSL
+
+[source,kotlin]
 ----
 repositories {
-    maven {
-        url 'https://oss.sonatype.org/content/groups/public'
+    mavenCentral()
+}
+
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation("org.infosmid:kfsm:2.0.0")
+        }
     }
 }
 ----
 
-=== Dependencies
-
-==== Kotlin/JVM Projects
-
-
 ===== Gradle Groovy DSL
 
 [source,groovy]
 ----
-dependencies {
-    implementation 'org.infosmid:kfsm-jvm:2.0.0'
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation 'org.infosmid:kfsm:2.0.0'
+            }
+        }
+    }
 }
 ----
+
+==== Kotlin/JVM Projects and Android Projects
 
 ===== Gradle Kotlin DSL
 
 [source,kotlin]
 ----
 dependencies {
-    implementation("org.infosmid:kfsm-jvm:2.0.0")
+    implementation("org.infosmid:kfsm:2.0.0")
 }
 ----
-
-==== KotlinJS Projects
 
 ===== Gradle Groovy DSL
 
 [source,groovy]
 ----
 dependencies {
-    implementation 'org.infosmid:kfsm-js:2.0.0'
+    implementation 'org.infosmid:kfsm:2.0.0'
 }
 ----
 
-===== Gradle Kotlin DSL
+== Finite State Machines
 
-[source,kotlin]
-----
-dependencies {
-    implementation("org.infosmid:kfsm-js:2.0.0")
-}
-----
+This section describes the life cycle and the design of kfsm.
 
-==== Kotlin/Native Projects using LinuxX64
+=== Terms
 
-===== Gradle Groovy DSL
+Some terms have a specific meaning in kfsm.
+Use this list to avoid confusion with other meanings of the same words.
 
-[source,groovy]
-----
-dependencies {
-    implementation 'org.infosmid:kfsm-linuxX64:2.0.0'
-}
-----
+State machine::
+The object that processes events.
+In this document, _state machine_ means a state machine that you define with kfsm.
+`FSM` is the short form that code and diagrams use.
 
-===== Gradle Kotlin DSL
+State (`S`)::
+A value that describes the situation of the context.
+A state can be any value that has `equals` and `hashCode`.
+Most examples use an `enum class`.
 
-[source,kotlin]
-----
-dependencies {
-    implementation("org.infosmid:kfsm-linuxX64:2.0.0")
-}
-----
+Event (`E`)::
+A value that you send to the state machine.
+An event can cause a transition.
+Like a state, an event is any value that has `equals` and `hashCode`.
 
-==== Kotlin/Native Projects using MinGW64
+Argument (`A`)::
+A value that you send together with an event.
+All events of one state machine have the same argument type.
+This is not a Kotlin function argument.
 
-===== Gradle Groovy DSL
+Return value (`R`)::
+The value that `sendEvent` returns.
+It is the result of the action that ran.
 
-[source,groovy]
-----
-dependencies {
-    implementation 'org.infosmid:kfsm-mingwX64:2.0.0'
-}
-----
+Context (`C`)::
+The object that the actions operate on.
+The action lambdas use the context as `this`.
+This is not a `CoroutineContext`.
 
-===== Gradle Kotlin DSL
+Action::
+A lambda that the state machine runs during a transition.
+An action is not a user interface action or an event.
 
-[source,kotlin]
-----
-dependencies {
-    implementation("org.infosmid:kfsm-mingwX64:2.0.0")
-}
-----
+Transition::
+The change that an event causes.
+A transition can run actions and can change the state.
 
-==== Kotlin/Native Projects using macOS
+External transition::
+A transition that has a target state.
+The state machine runs the exit action and the entry action.
+This is true also when the target state is the same as the current state.
 
-===== Gradle Groovy DSL
+Internal transition::
+A transition that has no target state.
+The state stays the same.
+The state machine does not run the exit action or the entry action.
 
-[source,groovy]
-----
-dependencies {
-    implementation 'org.infosmid:kfsm-macosX64:2.0.0'
-}
-----
+Guard expression::
+A lambda that returns a `Boolean`.
+A transition that has a guard expression occurs only when the guard returns `true`.
 
-===== Gradle Kotlin DSL
+Entry action and exit action::
+Actions that run for an external transition.
+The exit action runs for the current state.
+The entry action runs for the target state.
 
-[source,kotlin]
-----
-dependencies {
-    implementation("org.infosmid:kfsm-macosX64:2.0.0")
-}
-----
+Default action::
+An action that runs when no transition matches the current state and the event.
+This is not the default value of a Kotlin parameter.
 
-== Finite state machines.
+State map::
+A group of states with their transitions and actions.
+This is not a Kotlin `Map`.
+A state machine has one top-level state map and can have named state maps.
 
-This section will describe the life-cycle and philosophy behind this implementation of Finite state machines.
+Default state map::
+The top-level state map.
+Its name is `default`.
+
+Push transition and pop transition::
+Transitions that change the current state map.
+A push transition puts the current state map on a stack and makes a named state map current.
+A pop transition removes the current state map from the stack.
+The previous state map becomes current.
+
+Automatic transition::
+A transition that has no event.
+The state machine selects it after another transition completes.
+
+Timeout transition::
+A transition that has no event.
+It occurs when a configured time expires after the state machine enters the state.
+Only asynchronous state machines have timeout transitions.
+
+Definition::
+The immutable description of a state machine.
+You can share one definition.
+
+Instance::
+A state machine that you create from a definition.
+An instance has a context and a current state.
+
+Externalized state::
+A list of pairs of a state and a state map name.
+You can store it and use it to create an instance later.
+
+Invariant::
+A condition that must be `true` before and after every transition.
 
 === Definition
 
-An FSM is defined using a DSL as described further in this document.
+You define a state machine with a DSL, as this document describes.
 
-During this definition the user describes state types, events types as well as the behaviour of the FSM to events and how it will operate on a provided context.
+In the definition, you describe:
 
-The state and event types should be a value types.
+* The types of the states and the events.
+* The behavior of the state machine for each event.
+* How the actions operate on the context.
 
-The names `START` and `END` as states will be used as the start and end states when a state diagram is generated by `kfsm-viz`
+State types and event types must be value types.
+They must have `equals` and `hashCode`.
+An `enum class` is a good choice, but it is not necessary.
 
-The events may receive an argument and may return a value.
-The argument for all event must be the same type.
-However, sealed classes can be used to simplify the representation of different argument types.
+When `kfsm-viz` creates a state diagram, it uses the states `START` and `END` as the start state and the end state.
 
-The state machine will define one or more state maps each representing a subset of possible states of the same type.
+An event can have an argument and can return a value.
+The argument type is the same for all events.
+To send different types of arguments, use a sealed class as the argument type.
 
-The state machine will receive events, constrained by set of events.
-The event does not have to be enum, only a value with `equals` and `hashCode` implementations.
+A state machine has one or more state maps.
+Each state map has a subset of the states.
 
-The state machine will apply actions to a context.
-The context represents the work that need to be performed.
+The definition lists the events of the state machine.
 
-An event may trigger a state transition which defines actions to apply when the state machine is in a specific state.
+The state machine applies actions to a context.
+The context represents the work that the state machine does.
 
-Transitions may have a guard expression that has to evaluate to `true` to allow execution of transition.
+An event can cause a transition.
+A transition defines the actions that the state machine runs when it is in a specific state.
 
-An automatic transition can be defined on a state and has no events.
-Automatic transitions will be executed if the specific state is current after the exit action.
+A transition can have a guard expression.
+The transition occurs only when the guard returns `true`.
 
-A timeout transition can be defined on a state and is triggered a configured amount of time after the entry into the state.
-The transition will be trigger upon timeout unless a configured guard expression doesn't evaluate to `true`.
+An automatic transition belongs to a state and has no event.
+The state machine selects an automatic transition after another transition completes and the state is the current state.
 
-The state can be any value type providing `equals` and `hashCode`, even though we have been using `enum class` most examples.
+A timeout transition belongs to a state.
+It occurs when a configured time expires after the state machine enters the state.
+If the transition has a guard expression, the guard must return `true`.
 
 === Instance
 
-The philosophy behind the design is that the finite state machine can be used when needed by creating an instance using the definition and providing it with the context and optionally a previously externalized state.
-The state machine can also be defined to derive the current state from the provided context.
+You create an instance from a definition.
+You give the instance a context.
+You can also give it an externalized state.
+The definition can also derive the current state from the context.
 
-Then events are sent to the FSM with an argument if needed and this may trigger the defined actions.
+You send events to the instance.
+If the event needs an argument, you send it together with the event.
+An event can cause the state machine to run actions.
 
-The FSM provides for a query to determine which events are allowed for the current or a given state.
-This is useful when user interaction controls need to be disabled or in the case of a back-end application using HATEOAS can add links limited to allowed events.
+You can ask the instance which events the current state allows.
+You can also ask for the events of a given state.
+Use this to disable controls in a user interface.
+A back-end application that uses HATEOAS can use it to add only the links for allowed events.
 
-If the FSM is configured with timeout transitions the instance will need to remain active.
-This is typically only used in UI or embedded interactive applications.
+If a state machine has timeout transitions, the instance must stay active.
+This is usually necessary only in user interface applications and in embedded interactive applications.
 
-If the FSM is used in a stateless environment that is driven by requests or events, the state can be externalised after use if it isn't derived from the provided context.
-The externalised state is a list of pairs making up the state type and the name of the associated statemap.
+In a stateless environment, requests or events drive the application.
+If the state is not derived from the context, externalize the state after you use the instance.
+The externalized state is a list of pairs.
+Each pair has a state and the name of its state map.
+
+==== Initial State
+
+An instance needs an initial state.
+The state machine uses the first of these that is available:
+
+. The externalized state that you give to `create`.
+. The `initialStates` expression.
+. The initial state that you give to `create`.
+. The `initialState` expression.
+. The `defaultInitialState`.
+
+If none is available, `create` throws an exception.
 
 === Named Maps and Push / Pop Transitions
 
-A named map represents a set of states that is grouped together.
-Named maps can be visited by using a push transition and return using a pop transition.
-A push transition requires a map name and a target state along with the normal event and optional guard and action.
-The current state map will be pushed on a stack and a statemap instance will be created using the named definition.
-Events will be processed according to the transition rules of the named map.
+A named state map is a group of states.
+A push transition goes to a named state map.
+A pop transition returns from it.
+
+A push transition needs:
+
+* The name of the target state map.
+* The target state.
+* The event, as for a normal transition.
+* Optionally, a guard expression and an action.
+
+When a push transition occurs, the state machine puts the current state map on a stack.
+Then it creates an instance of the named state map.
+This instance becomes the current state map.
+The state machine processes events with the transition rules of the current state map.
+
+A pop transition removes the current state map from the stack.
+The previous state map becomes the current state map.
+If the pop transition has a target state, the state of the previous state map changes to the target state.
+If the pop transition has a target map, a push transition follows.
 
 == DSL
 
-The DSL provides a way of configuring the statemachine.
-The statemachine supports:
+The DSL is the way to configure a state machine.
+It supports:
 
-* Transitions: internal and external
-** Transitions are external when the target state is defined even if the target is same as current.
-* Guard expressions
-* Entry and exit actions per state and globally
-* Default actions per state and globally
-* Named statemaps
-* Push and pop transitions
-* Automatic transitions
-* Timeout transitions
-* Actions as `suspend` functions.
-* State machine `invariant` will be evaluated on all events and throw an `InvariantException` if not true
+* Internal transitions and external transitions.
+** A transition is external when it has a target state, also when the target state is the same as the current state.
+* Guard expressions.
+* Entry actions and exit actions for each state and for all states.
+* Default actions for each state and for all states.
+* Named state maps.
+* Push transitions and pop transitions.
+* Automatic transitions.
+* Timeout transitions.
+* Actions that are `suspend` functions.
+* An invariant. The state machine checks the invariant for all events. If the invariant is not `true`, it throws an `InvariantException`.
 
-All configuration calls are eventually applied to link:javadoc/kfsm/org.infosmid.kfsm/-state-machine-builder/index.html[StateMachineBuilder]
+All configuration calls are applied to link:javadoc/kfsm/org.infosmid.kfsm/-state-machine-builder/index.html[StateMachineBuilder].
 
 === `stateMachine`
 
-The top level element is `stateMachine` either by using the function
+The top-level element is `stateMachine`.
+Use one of these functions:
 
 * link:javadoc/kfsm/org.infosmid.kfsm/-state-machine-builder/state-machine.html[StateMachineBuilder::stateMachine]
 * link:javadoc/kfsm/org.infosmid.kfsm/state-machine.html[stateMachine]
 
-There are 3 overloaded variations on `stateMachine` for providing `Any` as the return type and the argument to events/actions in cases where they are not used.
+Two more overloads of `stateMachine` use `Any` as the return type and as the argument type.
+Use them when the state machine does not use the argument or the return value.
 
 [source,kotlin,numbered]
 ----
@@ -237,16 +338,18 @@ val definition = stateMachine(
 
 === `functionalStateMachine`
 
-The top level element is `functionalStateMachine` either by using the function
+The top-level element is `functionalStateMachine`.
+Use this function:
 
 * link:javadoc/kfsm/org.infosmid.kfsm/functional-state-machine.html[functionalStateMachine]
 
-It provides the same as `stateMachine` but in this case the Context, argument and return types are all the same.
+It is the same as `stateMachine`, but the context type, the argument type and the return type are the same type.
+Use it with an immutable context.
 
 [source,kotlin,numbered]
 ----
 // using global function
-val definition = stateMachine(
+val definition = functionalStateMachine(
     State.values().toSet(),
     Event.values().toSet(),
     ContextType::class
@@ -271,14 +374,15 @@ val definition = stateMachine(
 
 === `asyncStateMachine`
 
-This method provides for creating a statemachine definition and instances that have `suspend` functions as actions.
-This also adds the support for `timeout` on the state map handler.
-Creating an instance of an asyncStateMachine from a definition requires providing a `CoroutineScope`.
+Use `asyncStateMachine` to create a definition where the actions are `suspend` functions.
+It also adds the timeout transitions to the state map handlers.
+To create an instance from the definition, give it a `CoroutineScope`.
 
 * link:javadoc/kfsm/org.infosmid.kfsm.async/async-state-machine.html[asyncStateMachine]
-* link:javadoc/kfsm/org.infosmid.kfsm.async/-async-state-machine-builder/state-machine.html
+* link:javadoc/kfsm/org.infosmid.kfsm.async/-async-state-machine-builder/state-machine.html[AsyncStateMachineBuilder::stateMachine]
 
-There are 3 overloaded variations on `stateMachine` for providing `Any` as the return type and the argument to events/actions in cases where they are not used.
+Two more overloads of `asyncStateMachine` use `Any` as the return type and as the argument type.
+Use them when the state machine does not use the argument or the return value.
 
 [source,kotlin,numbered]
 ----
@@ -310,7 +414,7 @@ val definition = asyncStateMachine(
 
 === `asyncFunctionalStateMachine`
 
-This is the same as `asyncStateMachine` except that Context, argument and return types are all the same.
+`asyncFunctionalStateMachine` is the same as `asyncStateMachine`, but the context type, the argument type and the return type are the same type.
 
 * link:javadoc/kfsm/org.infosmid.kfsm.async/async-functional-state-machine.html[asyncFunctionalStateMachine]
 
@@ -346,7 +450,7 @@ val definition = asyncFunctionalStateMachine(
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
-Provide default configuration for entry and exit actions as well as a default action.
+Use `default` to configure the entry action, the exit action and the action for all states.
 
 Example:
 
@@ -370,7 +474,8 @@ default {
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
-Provide a lambda `C.(S, E, A?)->R?` that will be invoked when no other transitions are matched.
+Give a lambda of type `C.(S, E, A?) -> R?`.
+The state machine runs it when no other transition matches.
 
 Example:
 
@@ -388,8 +493,9 @@ action { currentState, event, arg -> // global default action
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
-Provide a lambda `C.(S,S,A?) -> Unit` that will be invoked before a change in the state of the FSM.
-Global entry actions will be called for all external transitions after state specific entry actions.
+Give a lambda of type `C.(S, S, A?) -> Unit`.
+The state machine runs it for each external transition, before the state changes.
+The state machine runs the global entry action after the entry action of the state.
 
 Example:
 
@@ -406,8 +512,9 @@ onEntry { fromState, targetState, arg ->
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
-Provide a lambda `C.(S,S,A?) -> Unit` that will be invoked after a change in the state of the FSM.
-Global exit actions will be called for all external transitions after state specific entry actions.
+Give a lambda of type `C.(S, S, A?) -> Unit`.
+The state machine runs it for each external transition, before the state changes.
+The state machine runs the global exit action after the exit action of the state.
 
 Example:
 
@@ -425,9 +532,11 @@ onExit { fromState, targetState, arg ->
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
-This defines a transition when a specific event is received and no other transition was matched.
-There are 2 variations, the first is internal and doesn't define a target state, the second is external and defines a target state.
-In both cases the lambda type is `C.(A?) -> R?`
+Use `onEvent` to define a transition for an event when no other transition matches.
+There are two variations.
+The first variation is an internal transition and has no target state.
+The second variation is an external transition and has a target state.
+In both variations, the lambda type is `C.(A?) -> R?`.
 
 Example:
 
@@ -448,7 +557,8 @@ onEvent(Event.EVENT to State.STATE) { arg -> // default external state action fo
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
-Provide a lambda `C.() -> S` that will determine the state of the state machine.
+Give a lambda of type `C.() -> S`.
+The lambda derives the state of the state machine from the context.
 
 Example:
 
@@ -469,11 +579,14 @@ initialState {
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
+If the state machine has named state maps, you must use `initialStates`.
+You cannot use `initialState` with named state maps.
 
-One of `initialState` or `initialStates` must be provided.
-When a state-machine has named maps the `initialStates` must be provided.
-
-Provide a lambda `C.() -> StateMapList<S>` that will determine the state of the state machine and map names that should be placed on the stack.
+Give a lambda of type `C.() -> StateMapList<S>`.
+The lambda derives the state map stack from the context.
+It returns a list of pairs of a state and a state map name.
+The first pair is the bottom of the stack.
+The last pair is the current state map.
 
 Example:
 
@@ -499,7 +612,17 @@ initialStates {
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
-The `onStateChange` handler will be invoked after a transition has complete and the new state has taken effect. onExit and onEntry are invoked before a state change and checking allow within those handlers still relfect the previous state.
+Give a lambda of type `C.(S, S) -> Unit`.
+The first argument is the previous state.
+The second argument is the new state.
+
+The state machine runs this lambda after a transition completes and the new state is in effect.
+It does not run the lambda when the state stays the same.
+The exit actions and the entry actions run before the state changes.
+Inside these actions, a check of the allowed events still shows the previous state.
+
+The state machine catches an exception from the lambda.
+It does not throw the exception again.
 
 === `whenState`
 
@@ -508,7 +631,7 @@ The `onStateChange` handler will be invoked after a transition has complete and 
 * Mandatory: _Mandatory_
 * Cardinality: _Multiple_
 
-Each `whenState` block decribes the transitions for a given state.
+Each `whenState` block describes the transitions for one state.
 
 Example:
 
@@ -523,7 +646,7 @@ whenState(State.STATE) {
     }
     onEvent(Event.EV2 to State.S1, guard = {flag == 1 }) { // external transition with guard expression
     }
-    onEventPush(Event.EV2, "mapName", State.S1, gaurd = { flag == 1}) { // push transition to new map with guard expression
+    onEventPush(Event.EV2, "mapName", State.S1, guard = { flag == 1}) { // push transition to new map with guard expression
     }
     onEventPop(Event.EV3, "newMap", State.S3) { // pop transition leading into new push transition while executing current action only
     }
@@ -532,9 +655,9 @@ whenState(State.STATE) {
     // timeout is limited to AsyncStateMachineBuilder
     timeout(State.S1, timeout, [guard = { expression }]) { // transition to S1 when timeout is triggered and guard is true
     }
-    timeoutPop(State.S1, timeout, [guard = { expression }]) { // transition to S1 when timeout is triggered and guard is true
+    timeoutPop(State.S1, timeout, [guard = { expression }]) { // pop transition to S1 when timeout is triggered and guard is true
     }
-    timeoutPush(State.S1, "mapName",  timeout, [guard = { expression }]) { // transition to S1 when timeout is triggered and guard is true
+    timeoutPush(State.S1, "mapName",  timeout, [guard = { expression }]) { // push transition to S1 in "mapName" when timeout is triggered and guard is true
     }
 }
 ----
@@ -545,7 +668,9 @@ whenState(State.STATE) {
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
-A state block may have one default action which is a lambda of type `C.(S,E,Array<out Any>) -> Unit` that is invoked when no other transition is found for the given state and event and guard expressions.
+A state block can have one default action.
+It is a lambda of type `C.(S, E, A?) -> R?`.
+The state machine runs it when no transition matches the state, the event and the guard expressions.
 
 Example:
 
@@ -562,7 +687,9 @@ default { fromState, event, arg -> // default state action
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
-This defines a lambda of type `C.(S,S,A?) -> R?` that will be invoked after the transition action for an external transition.
+Give a lambda of type `C.(S, S, A?) -> Unit`.
+The state machine runs it for an external transition that has this state as the target state.
+It runs after the transition action.
 
 Example:
 
@@ -580,7 +707,9 @@ onEntry { fromState, targetState, arg -> // state entry action
 * Mandatory: _Optional_
 * Cardinality: _Single_
 
-This defines a lambda of type `C.(S,S,A?) -> Unit` that will be invoked before the transition action for an external transitions.
+Give a lambda of type `C.(S, S, A?) -> Unit`.
+The state machine runs it for an external transition that starts in this state.
+It runs before the transition action.
 
 Example:
 
@@ -594,13 +723,18 @@ onExit { fromState, targetState, arg -> // state exit action
 ==== `automatic`
 
 * Arguments: `(targetState: S [, guard:{}])`
-* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/automatic.html[DslStateMachineDefaultEventHandler::automatic]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/automatic.html[DslStateMachineEventHandler::automatic]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
-There are 2 variations of automatic transitions: Those with and without guards.
-An automatic transition is exercises after the state machine has completed processing a transition.
-All automatic transitions attached to a given state will be invoked if their guards are met.
+There are two variations of the automatic transition.
+One variation has a guard expression.
+The other variation has no guard expression.
+
+The state machine selects an automatic transition after it completes a transition, when this state is the current state.
+It selects the transition in the same way as for an event.
+The first guard that returns `true` selects the transition.
+If no guard returns `true`, the state machine uses the transition that has no guard.
 
 Example:
 
@@ -617,11 +751,14 @@ whenState(State.S1) {
 ==== `automaticPop`
 
 * Arguments: `([targetMap: String,][,targetState: S] [, guard:{}])`
-* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/automatic-pop.html[DslStateMachineDefaultEventHandler::automaticPop]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/automatic-pop.html[DslStateMachineEventHandler::automaticPop]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
-There are 6 variations of automatic transitions: Those with and without guards, those with and without targetMaps which will lead to a new push transition.
+There are six variations of the automatic pop transition.
+Each variation has or does not have a guard expression.
+Each variation has no target, a target state, or a target map and a target state.
+If the transition has a target map, a push transition follows the pop transition.
 
 Example:
 
@@ -646,11 +783,13 @@ whenState(State.S1) {
 ==== `automaticPush`
 
 * Arguments: `(targetMap: String, targetState: S [, guard:{}])`
-* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/automatic-push.html[DslStateMachineDefaultEventHandler::automaticPush]
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm/-dsl-state-map-event-handler/automatic-push.html[DslStateMachineEventHandler::automaticPush]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
-There are 2 variations of automatic transitions: Those with and without guards
+There are two variations of the automatic push transition.
+One variation has a guard expression.
+The other variation has no guard expression.
 
 Example:
 
@@ -671,14 +810,18 @@ whenState(State.S1) {
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
-There are 4 variations of transitions: External and internal, with and without a guard expression.
+There are four variations of the transition.
+A transition is external or internal.
+It has or does not have a guard expression.
 
-This defines a transition action for a given event.
-For an external transition a target state must be provided, while an internal transition must have no targetState.
-An optional guard expression can be provided.
-The order in which the DSL encounters guard expression determine the evaluation order.
-The first matching guard expression will determine the transition that will be used.
-Their may be only one transition without a guard expression.
+`onEvent` defines the transition for an event.
+An external transition must have a target state.
+An internal transition must not have a target state.
+A transition can have a guard expression.
+
+The order in which the DSL reads the guard expressions is the order of evaluation.
+The first guard that returns `true` selects the transition.
+For one state and one event, only one transition can have no guard expression.
 
 Examples:
 
@@ -701,14 +844,18 @@ onEvent(Event.EV2 to State.S2) { arg -> // external transition
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
-There are 2 variations of automatic transitions: Those with and without guards Example:
+There are two variations of the push transition.
+One variation has a guard expression.
+The other variation has no guard expression.
+
+Example:
 
 [source,kotlin,numbered]
 ----
 whenState(State.S1) {
     onEventPush(Event.EV2, "mapName", State.S2) { // push transition to S2 in new map "mapName"
     }
-    onEventPush(Event.EV2, "mapName", State.S2, gaurd = { flag == 1}) { // push transition to S2 in new map "mapName" with guard expression
+    onEventPush(Event.EV2, "mapName", State.S2, guard = { flag == 1}) { // push transition to S2 in new map "mapName" with guard expression
     }
 }
 ----
@@ -720,7 +867,10 @@ whenState(State.S1) {
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
-There are 6 variations of popTransitions to provide for with and without guards, with and without a new state and with and without a targetMap that will result in a new push transition.
+There are six variations of the pop transition.
+Each variation has or does not have a guard expression.
+Each variation has no target, a target state, or a target map and a target state.
+If the transition has a target map, a push transition follows the pop transition.
 
 Example:
 
@@ -744,79 +894,115 @@ whenState(State.S1) {
 
 ==== `timeout`
 
-* Arguments: `(targetState: S, timeout: Long, [guard:{}])`
-* Handler: link:javadoc/kfsm/org.infosmid.kfsm.async/-async-dsl-state-map-event-handler/timeout.html[AsyncDslStateMapEventHandler::onEventPop]
+* Arguments: `(targetState: S, timeout: Long | C.() -> Long, [guard:{}])`
+* Handler: link:javadoc/kfsm/org.infosmid.kfsm.async/-async-dsl-state-map-event-handler/timeout.html[AsyncDslStateMapEventHandler::timeout]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
-There are 2 versions.
-One adds the support for a guard expression that will be evaluated and the action will only trigger if the guard evaluates true.
+Only asynchronous state machines have timeout transitions.
+
+The state machine starts a timer when it enters the state.
+When the timer expires, the transition occurs.
+The state machine cancels the timer when it processes another transition.
+
+The timeout is in milliseconds.
+Give it as a `Long`, or as a lambda that has the context as `this` and returns a `Long`.
+
+There are four variations.
+Two variations add a guard expression.
+The transition occurs only when the guard returns `true`.
 
 ==== `timeoutPop`
 
-* Arguments: `([targetMap: String], targetState: S, timeout: Long, [guard:{}])`
+* Arguments: `([targetMap: String], [targetState: S], timeout: Long | C.() -> Long, [guard:{}])`
 * Handler: link:javadoc/kfsm/org.infosmid.kfsm.async/-async-dsl-state-map-event-handler/timeout-pop.html[AsyncDslStateMapEventHandler::timeoutPop]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
-There are 5 versions.
-Combinations exist to add the optional guard expression and the targetMap.
+`timeoutPop` is a timeout transition that is also a pop transition.
+The variations combine these options:
+
+* The timeout as a `Long` or as a lambda.
+* An optional guard expression.
+* No target, a target state, or a target map and a target state.
+
+If the transition has a target map, a push transition follows the pop transition.
 
 ==== `timeoutPush`
 
-* Arguments: `(targetMap: String, targetState: S, timeout: Long, [guard:{}])`
+* Arguments: `(targetMap: String, targetState: S, timeout: Long | C.() -> Long, [guard:{}])`
 * Handler: link:javadoc/kfsm/org.infosmid.kfsm.async/-async-dsl-state-map-event-handler/timeout-push.html[AsyncDslStateMapEventHandler::timeoutPush]
 * Mandatory: _Optional_
 * Cardinality: _Multiple_
 
-There are 2 variations, the 2nd adds the optional guard expression.
+`timeoutPush` is a timeout transition that is also a push transition.
+The variations combine these options:
+
+* The timeout as a `Long` or as a lambda.
+* An optional guard expression.
 
 == Operation
 
-When the FSM was defined and instance can be created providing a context and optional externalized stated.
+After you define a state machine, you can create an instance.
+You give the instance a context.
+You can also give it an externalized state.
 
-When sendEvent is called the state machine applies the event to the current state map.
-The current state map is usually top-level state map unless you have defined named maps and used a push transition.
+When you call `sendEvent`, the state machine applies the event to the current state map.
+The current state map is the top-level state map, unless you defined named state maps and a push transition occurred.
 
 image::statemachine-sequence.png[FSM sequence]
 
 === Send Event
 
-The normal operation is to invoke the following actions:
+For an external transition, the state machine runs these actions in this order:
 
 * `sendEvent`
-** `if(external) exitAction()`
+** `exitAction()`
 ** `action()`
-** `if(external) entryAction()`
+** `entryAction()`
 
-The exit action is chosen from one of:
+For an internal transition, the state machine runs only `action()`.
 
-* `stateMap/whenState/onExit`
-* `stateMap/whenState/default/onExit`
-* `stateMap/default/onExit`
+The state machine runs the exit action of the state first.
+Then it runs the default exit action.
+The exit action of the state is `whenState/onExit`.
+If the current state map has no such action, the state machine uses `whenState/onExit` of the default state map.
+The default exit action is `stateMap/default/onExit`.
+If the current state map has none, the state machine uses the default exit action of the default state map.
 
-The action is chosen from one of:
+The action is the first of these that exists:
 
 * `stateMap/whenState/onEvent`
 * `stateMap/whenState/default/action`
 * `stateMap/default/action`
 
-The entry action is chosen from one of:
+The state machine runs the entry action of the state first.
+Then it runs the default entry action.
+The entry action of the state is `whenState/onEntry`.
+If the current state map has no such action, the state machine uses `whenState/onEntry` of the default state map.
+The default entry action is `stateMap/default/onEntry`.
+If the current state map has none, the state machine uses the default entry action of the default state map.
 
-* `stateMap/whenState/onEntry`
-* `stateMap/whenState/default/onEntry`
-* `stateMap/default/onEntry`
+The current state and the event select a set of transition rules.
+The definition gives these rules.
+If the rules have guarded transitions, the state machine evaluates the guard expressions in order.
+The first guard that returns `true` selects the transition.
+If no guard returns `true`, the state machine uses the transition that has no guard.
 
-The combination of current state and event determines a set of transition rules that have been applied to that combination by one or more definitions.
-If the transition rules contains guard transitions the guard expressions are evaluated until one evaluates `true`.
-The `onEntry` and `onExit` action are only invoked for `external` transitions.
+If no transition matches, the state machine runs the default action.
+If there is no default action, `sendEvent` throws an exception.
 
-External transitions have an explicit target state defined.
-If the target state is not defined it is an internal transition.
+The state machine runs `onEntry` and `onExit` only for external transitions.
+An external transition has a target state.
+An internal transition has no target state.
 
-The currentState determines the exit action.
-The target state determines the entry action.
+The current state selects the exit action.
+The target state selects the entry action.
 
-=== Notes on concurrency and coroutines.
+After a transition completes, the state machine selects the automatic transitions of the current state.
 
-The implementations of the AsyncTimer uses the provided `CoroutineScope` to `launch` the trigger after a `delay`
+=== Notes on Concurrency and Coroutines
+
+`AsyncTimer` uses the `CoroutineScope` that you give when you create the instance.
+It starts a coroutine in this scope.
+The coroutine waits for the `delay` and then runs the trigger.

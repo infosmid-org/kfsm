@@ -18,6 +18,12 @@ package org.infosmid.kfsm.async
 import org.infosmid.kfsm.AsyncStateAction
 import org.infosmid.kfsm.TransitionType
 
+/**
+ * @suppress
+ * A transition for a state and an event in an asynchronous state machine.
+ * @param startState The state where the transition starts.
+ * @param event The event that triggers the transition. It is `null` for an automatic transition or a timeout transition.
+ */
 open class SimpleAsyncTransition<S, E, C, A, R>(
     internal val startState: S,
     internal val event: E?,

@@ -15,6 +15,12 @@
  */
 package org.infosmid.kfsm.async
 
+/**
+ * @suppress
+ * The transition rules for one state and one event. The rules have one transition and a list of guarded transitions.
+ * @param guardedTransitions The list of guarded transitions. The state machine checks them in list order.
+ * @param transition The transition to use when there are no guarded transitions, or when no guard returns `true`.
+ */
 class AsyncTransitionRules<S, E, C, A, R>(
     val guardedTransitions: MutableList<AsyncGuardedTransition<S, E, C, A, R>> = mutableListOf(),
     transition: SimpleAsyncTransition<S, E, C, A, R>? = null
@@ -23,15 +29,17 @@ class AsyncTransitionRules<S, E, C, A, R>(
         internal set
 
     /**
-     * Add a guarded transition to the end of the list
+     * Adds a guarded transition to the end of the list.
      */
     fun addGuarded(guardedTransition: AsyncGuardedTransition<S, E, C, A, R>) {
         guardedTransitions.add(guardedTransition)
     }
 
     /**
-     * Find the first entry in the list of guarded transitions that match/
-     * @param context The given context.
+     * Finds the first guarded transition where the guard returns `true`.
+     * @param context The context that the guards check.
+     * @param arg The event argument.
+     * @return The first matching guarded transition, or `null` if no guard returns `true`.
      */
     fun findGuard(context: C, arg: A? = null): AsyncGuardedTransition<S, E, C, A, R>? =
         guardedTransitions.firstOrNull { it.guardMet(context, arg) }

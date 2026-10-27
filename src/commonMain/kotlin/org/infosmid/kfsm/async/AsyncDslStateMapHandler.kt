@@ -16,22 +16,22 @@
 package org.infosmid.kfsm.async
 
 /**
- * This handler will be active inside the top level of the stateMachine definition.
+ * The DSL receiver inside a named `stateMap` block of an asynchronous state machine.
  */
 class AsyncDslStateMapHandler<S, E, C, A, R>(private val fsm: AsyncStateMapBuilder<S, E, C, A, R>) {
 
     /**
-     * Defines a section for a specific state.
-     * @param currentState The give state
-     * @param handler A lambda with definitions for the given state
+     * Declares the transitions and actions for one state.
+     * @param currentState The state that the block describes.
+     * @param handler The lambda that declares the transitions and actions.
      */
     fun whenState(currentState: S, handler: AsyncDslStateMapEventHandler<S, E, C, A, R>.() -> Unit):
         AsyncDslStateMapEventHandler<S, E, C, A, R> =
         AsyncDslStateMapEventHandler(currentState, fsm).apply(handler)
 
     /**
-     * Defines a section for default behaviour for the state machine.
-     * @param handler A lambda with definition for the default behaviour of the state machine.
+     * Declares the default behaviour of the state map.
+     * @param handler The lambda that declares the default actions.
      */
     fun default(handler: AsyncDslStateMapDefaultEventHandler<S, E, C, A, R>.() -> Unit):
         AsyncDslStateMapDefaultEventHandler<S, E, C, A, R> =

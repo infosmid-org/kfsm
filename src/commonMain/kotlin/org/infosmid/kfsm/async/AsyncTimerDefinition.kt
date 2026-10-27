@@ -15,6 +15,12 @@
  */
 package org.infosmid.kfsm.async
 
+/**
+ * @suppress
+ * The definition of a timeout transition for a state.
+ * @param timeout A lambda that has the context as `this` and returns the time to wait in milliseconds.
+ * @param rule The transition rules to use when the time expires.
+ */
 class AsyncTimerDefinition<S, E, C, A, R>(
     val timeout: C.() -> Long,
     val rule: AsyncTransitionRules<S, E, C, A, R>

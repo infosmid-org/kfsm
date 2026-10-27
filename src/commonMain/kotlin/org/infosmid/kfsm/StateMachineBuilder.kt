@@ -18,15 +18,23 @@ package org.infosmid.kfsm
 import org.infosmid.dbc.precondition
 
 /**
- * This class represents the definition of a statemachine.
+ * The builder of a state machine definition.
+ * The DSL records the declaration in this builder. Then `complete()` creates the immutable definition.
  * @author Corneil du Plessis
  * @soundtrack Wolfgang Amadeus Mozart
- * @param S is an enum representing all the states of the FSM
- * @param E is en enum representing all the events the FSM may receive
- * @param C is the class of the Context where the action will be applied.
+ * @param S The state type. It is often an enum.
+ * @param E The event type. It is often an enum.
+ * @param C The context type. The actions operate on the context.
+ * @param A The type of the event argument.
+ * @param R The type of the return value of the actions.
+ * @param validMapStates The set of states that the default state map allows.
+ * @param validEvents The set of events of the state machine.
  */
 class StateMachineBuilder<S, E, C, A, R>(validMapStates: Set<S>, internal val validEvents: Set<E>) {
     private var completed = false
+    /**
+     * The initial state to use when no `initialState` expression or external state is available.
+     */
     var defaultInitialState: S? = null
     private var deriveInitialState: StateQuery<C, S>? = null
     private var deriveInitialStateMap: StateMapQuery<C, S>? = null
@@ -35,49 +43,55 @@ class StateMachineBuilder<S, E, C, A, R>(validMapStates: Set<S>, internal val va
     internal var afterStateChangeAction: StateChangeAction<C, S>? = null
 
     /**
-     * This function is used to provide a method for determining the initial state of the FSM using the provided content.
-     * @param init Is a function that receives a context and returns the state that represents the context
+     * Sets the expression that derives the initial state from the context.
+     * @param init A function that has the context as `this` and returns the state.
+     * @throws org.infosmid.dbc.PreConditionException if the builder is complete.
      */
     fun initialState(init: StateQuery<C, S>) {
-        precondition(!completed) { "Statemachine has been completed" }
+        precondition(!completed) { "The state machine definition is complete. You cannot change it." }
         deriveInitialState = init
     }
 
     /**
-     * This function is used to provide a method for determining the initial state of the FSM in cases where there may be one or more named statemaps.
-     * In this case the state may be a stack or name / value pairs representing the map name and pushed state.
-     * @param init Is a function that will use the context to provide a list which will be pushed on the stack. The last item in the list will become the current state.
+     * Sets the expression that derives the state map stack from the context.
+     * Use it when the state machine has named state maps.
+     * The stack is a list of pairs of a state and a state map name.
+     * @param init A function that has the context as `this` and returns the list. The state machine pushes the items on the stack in list order. The last item is the current state map.
+     * @throws org.infosmid.dbc.PreConditionException if the builder is complete.
      */
     fun initialStates(init: StateMapQuery<C, S>) {
-        precondition(!completed) { "Statemachine has been completed" }
+        precondition(!completed) { "The state machine definition is complete. You cannot change it." }
         deriveInitialStateMap = init
     }
 
     /**
-     * This function will be use to define a named statemap.
-     * @param name The name of the StateMap. It must be unique.
-     * @param validStates The set of valid states for the StateMap.
+     * Declares a named state map.
+     * @param name The name of the state map. The name must be unique, must not be empty and must not be `default`.
+     * @param validStates The set of states that the state map allows. The set must not be empty.
+     * @return The builder of the state map.
      */
     fun stateMap(
         name: String,
         validStates: Set<S>
     ): StateMapBuilder<S, E, C, A, R> {
-        precondition(name.trim().isNotEmpty()) { "statemap name must not be empty" }
-        precondition(name != "default") { "Map cannot be named 'default'" }
-        precondition(validStates.isNotEmpty()) { "Provide at least one entty in validStates" }
+        precondition(name.trim().isNotEmpty()) { "The name of a state map must not be empty" }
+        precondition(name != "default") { "The name 'default' is reserved for the top-level state map" }
+        precondition(validStates.isNotEmpty()) { "A state map must have at least one valid state" }
         val stateMapBuilder = StateMapBuilder<S, E, C, A, R>(validStates, name, this)
         namedStateMaps[name] = stateMapBuilder
         return stateMapBuilder
     }
 
     /**
-     * This function enables completed for the state machine definition prevent further changes to the state
-     * machine behaviour.
+     * Completes the declaration and creates the definition.
+     * After this call, the builder does not accept changes.
+     * @return The immutable state machine definition.
+     * @throws org.infosmid.dbc.PreConditionException if the state machine has named state maps and an `initialState` expression.
      */
     fun complete(): StateMachineDefinition<S, E, C, A, R> {
         completed = true
         if (namedStateMaps.isNotEmpty()) {
-            precondition(this.deriveInitialState == null) { "deriveInitialState cannot be used with named state maps" }
+            precondition(this.deriveInitialState == null) { "Use initialStates, not initialState, when the state machine has named state maps" }
         }
         return StateMachineDefinition(
             this.defaultInitialState,
@@ -89,36 +103,40 @@ class StateMachineBuilder<S, E, C, A, R>(validMapStates: Set<S>, internal val va
     }
 
     /**
-     * This function can be used the define a new state machine.
+     * Declares the state machine with the DSL.
+     * @param handler The lambda that declares the state machine.
+     * @return The DSL handler.
      */
     inline fun stateMachine(handler: DslStateMachineHandler<S, E, C, A, R>.() -> Unit): DslStateMachineHandler<S, E, C, A, R> =
         DslStateMachineHandler(this).apply(handler)
 
     /**
-     * This function will set an action that will be invoked when the state has changed and transition is complete.
-     * This will be invoked after onEntry and onExit handlers.
+     * Sets the action that the state machine runs after the state has changed.
+     * The state machine runs it after the exit action, the transition action and the entry action.
+     * @param action A lambda that receives the previous state and the new state.
      */
     fun afterStateChange(action: StateChangeAction<C, S>) {
         this.afterStateChangeAction = action
     }
 
     /**
-     * This function defines an invariant condition that will hold true before and after all transitions.
-     * @param message The message added to exception
-     * @param condition A boolean expression applied to the context
+     * Declares an invariant. The condition must be `true` before and after every transition.
+     * @param message The message of the `InvariantException` that the state machine throws when the condition is `false`.
+     * @param condition A boolean expression that has the context as `this`.
      */
     fun invariant(message: String, condition: Condition<C>) {
         defaultStateMap.invariant(message, condition)
     }
 
     /**
-     * This function defines a transition from the currentState equal to startState to the targetState when event is
-     * received and the guard expression is met. The action is executed after any exit action and before entry actions.
-     * @param startState The transition will be considered when currentState matches stateState
-     * @param event The event will trigger the consideration of this transition
-     * @param targetState The transition will change currentState to targetState after executing the option action
-     * @param guard The guard expression will have to be met to consider the transition
-     * @param action The optional action will be executed when the transition occurs.
+     * Declares an external transition with a guard.
+     * The transition occurs when the current state is `startState`, the state machine receives the event and the guard returns `true`.
+     * The state machine runs the action after the exit action and before the entry action.
+     * @param startState The state where the transition starts.
+     * @param event The event that triggers the transition.
+     * @param targetState The state after the transition.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun transition(
         startState: S,
@@ -130,94 +148,104 @@ class StateMachineBuilder<S, E, C, A, R>(validMapStates: Set<S>, internal val va
         defaultStateMap.transition(startState, event, targetState, guard, action)
 
     /**
-     * This function defines a transition that doesn't change the state also know as an internal transition.
-     * The transition will only occur if the guard expression is met.
-     * @param startState The transition will be considered when currentState matches stateState
-     * @param event The event will trigger the consideration of this transition
-     * @param guard The guard expression will have to be met to consider the transition
-     * @param action The optional action will be executed when the transition occurs.
+     * Declares an internal transition with a guard. The state does not change.
+     * The transition occurs only when the guard returns `true`.
+     * @param startState The state where the transition starts.
+     * @param event The event that triggers the transition.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun transition(startState: S, event: E, guard: StateGuard<C, A>, action: SyncStateAction<C, A, R>?) =
         defaultStateMap.transition(startState, event, guard, action)
 
     /**
-     * This function defines a transition that will be triggered when the currentState is the same as the startState and on is received. The FSM currentState will change to the targetState after the action was executed.
-     * Entry and Exit actions will also be performed.
-     * @param startState transition applies when FSM currentState is the same as stateState.
-     * @param event transition applies when on received.
-     * @param targetState FSM will transition to targetState.
-     * @param action The actions will be invoked
+     * Declares an external transition.
+     * The transition occurs when the current state is `startState` and the state machine receives the event.
+     * The state machine runs the exit action, the transition action and the entry action. Then the state changes to the target state.
+     * @param startState The state where the transition starts.
+     * @param event The event that triggers the transition.
+     * @param targetState The state after the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun transition(startState: S, event: E, targetState: S, action: SyncStateAction<C, A, R>?) =
         defaultStateMap.transition(startState, event, targetState, action)
 
     /**
-     * This function defines a transition that doesn't change the state of the state machine when the currentState is startState and the on is received and after the action was performed. No entry or exit actions performed.
-     * @param startState transition applies when when FSM currentState is the same as stateState
-     * @param event transition applies when on received
-     * @param action actions will be invoked
+     * Declares an internal transition. The state does not change.
+     * The state machine does not run the exit action or the entry action.
+     * @param startState The state where the transition starts.
+     * @param event The event that triggers the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun transition(startState: S, event: E, action: SyncStateAction<C, A, R>?) =
         defaultStateMap.transition(startState, event, action)
 
     /**
-     * This function defines an action to be invoked when no action is found matching the current state and event.
-     * This will be an internal transition and will not cause a change in state or invoke entry or exit functions.
-     * @param action This action will be performed
+     * Declares the default action for the state machine.
+     * The state machine runs it when no transition matches the current state and the event.
+     * It is an internal transition. The state does not change, and the state machine does not run the exit action or the entry action.
+     * @param action The lambda to run.
      */
     fun defaultAction(action: DefaultStateAction<C, S, E, A, R>) =
         defaultStateMap.defaultAction(action)
 
     /**
-     * This function defines an action to be invoked when no entry action is defined for the current state.
-     * @param action This action will be invoked
+     * Declares the default entry action.
+     * The state machine runs it for an external transition, after the entry action of the target state.
+     * @param action The lambda to run.
      */
     fun defaultEntry(action: DefaultEntryExitAction<C, S, A>) =
         defaultStateMap.defaultEntry(action)
 
     /**
-     * This function defines an action to be invoked when no exit action is defined for the current state.
-     * @param action This action will be invoked
+     * Declares the default exit action.
+     * The state machine runs it for an external transition, after the exit action of the current state.
+     * @param action The lambda to run.
      */
     fun defaultExit(action: DefaultEntryExitAction<C, S, A>) =
         defaultStateMap.defaultExit(action)
 
     /**
-     * This function defines an action to be invoked when no transitions are found matching the given state and on.
-     * @param currentState The provided state
-     * @param action This action will be invoked
+     * Declares the default action for one state.
+     * The state machine runs it when no transition matches the state and the event.
+     * @param currentState The state that the action applies to.
+     * @param action The lambda to run.
      */
     fun default(currentState: S, action: DefaultStateAction<C, S, E, A, R>) =
         defaultStateMap.default(currentState, action)
 
     /**
-     * This function defines an action to be invoked when no transitions match the event. The currentState will be change to second parameter of the Pair.
-     * @param event The Pair holds the event and targetState and can be written as `event to state`
-     * @param action The option action will be executed when this default transition occurs.
+     * Declares a default external transition for an event.
+     * The state machine uses it when no transition matches the event. The state changes to the target state.
+     * @param event A pair of the event and the target state. Write it as `event to state`.
+     * @param action An optional lambda to run during the transition.
      */
     fun default(event: EventState<E, S>, action: SyncStateAction<C, A, R>?) =
         defaultStateMap.default(event, action)
 
     /**
-     * This function defines an action to be invoked when no transitions are found for given event.
-     * @param event The event to match this transition.
-     * @param action The option action will be executed when this default transition occurs.
+     * Declares a default internal transition for an event.
+     * The state machine uses it when no transition matches the event. The state does not change.
+     * @param event The event that triggers the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun default(event: E, action: SyncStateAction<C, A, R>?) =
         defaultStateMap.default(event, action)
 
     /**
-     * This function defines an action to be invoked when the FSM changes to the provided state
-     * @param currentState The provided state
-     * @param action This action will be invoked
+     * Declares the entry action for a state.
+     * The state machine runs it for an external transition that has this state as the target state.
+     * @param currentState The state that the action applies to.
+     * @param action The lambda to run.
      */
     fun entry(currentState: S, action: DefaultEntryExitAction<C, S, A>) =
         defaultStateMap.entry(currentState, action)
 
     /**
-     * This function defines an action to be invoke when the FSM changes from the provided state
-     * @param currentState The provided state
-     * @param action This action will be invoked
+     * Declares the exit action for a state.
+     * The state machine runs it for an external transition that starts in this state.
+     * @param currentState The state that the action applies to.
+     * @param action The lambda to run.
      */
     fun exit(currentState: S, action: DefaultEntryExitAction<C, S, A>) =
         defaultStateMap.exit(currentState, action)

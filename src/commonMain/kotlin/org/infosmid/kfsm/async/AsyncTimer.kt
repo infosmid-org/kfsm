@@ -22,6 +22,17 @@ import kotlinx.coroutines.delay
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
+/**
+ * @suppress
+ * A timer for a timeout transition.
+ * The timer starts when it is created. After the delay, it runs the transition if the timer is still active.
+ * The timer uses the `CoroutineScope` to run the delay.
+ * @param parentFsm The state map instance that owns the timer.
+ * @param context The context that the guards and actions operate on.
+ * @param arg The event argument of the transition that entered the state.
+ * @param definition The definition of the timer. It has the delay and the transition rules.
+ * @param coroutineScope The scope that runs the delay.
+ */
 @OptIn(ExperimentalAtomicApi::class)
 class AsyncTimer<S, E, C, A, R> constructor(
     private val parentFsm: AsyncStateMapInstance<S, E, C, A, R>,
@@ -41,10 +52,17 @@ class AsyncTimer<S, E, C, A, R> constructor(
         }
     }
 
+    /**
+     * Cancels the timer. The timer does not run the transition after it is cancelled.
+     */
     fun cancel() {
         active.store(false)
     }
 
+    /**
+     * Runs the transition of the timeout when the timer is active.
+     * It uses the first guarded transition where the guard returns `true`. Otherwise it uses the transition without a guard.
+     */
     suspend fun trigger() {
         if (active.load()) {
             val defaultTransition = definition.rule.transition

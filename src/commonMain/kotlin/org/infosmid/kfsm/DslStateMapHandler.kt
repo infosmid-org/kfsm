@@ -16,24 +16,24 @@
 package org.infosmid.kfsm
 
 /**
- * This handler will be active inside the top level of the stateMachine definition.
+ * The DSL receiver inside a named `stateMap` block.
  * @author Corneil du Plessis
  * @soundtrack Wolfgang Amadeus Mozart
  */
 class DslStateMapHandler<S, E, C, A, R>(private val fsm: StateMapBuilder<S, E, C, A, R>) {
 
     /**
-     * Defines a section for a specific state.
-     * @param currentState The give state
-     * @param handler A lambda with definitions for the given state
+     * Declares the transitions and actions for one state.
+     * @param currentState The state that the block describes.
+     * @param handler The lambda that declares the transitions and actions.
      */
     fun whenState(currentState: S, handler: DslStateMapEventHandler<S, E, C, A, R>.() -> Unit):
         DslStateMapEventHandler<S, E, C, A, R> =
         DslStateMapEventHandler(currentState, fsm).apply(handler)
 
     /**
-     * Defines a section for default behaviour for the state machine.
-     * @param handler A lambda with definition for the default behaviour of the state machine.
+     * Declares the default behaviour of the state map.
+     * @param handler The lambda that declares the default actions.
      */
     fun default(handler: DslStateMapDefaultEventHandler<S, E, C, A, R>.() -> Unit):
         DslStateMapDefaultEventHandler<S, E, C, A, R> =

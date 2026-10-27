@@ -19,11 +19,14 @@ import org.infosmid.dbc.preconditionNotNull
 
 /**
  * @suppress
- * The base for all transitions.
+ * The base class for all transitions.
  * @author Corneil du Plessis
  * @soundtrack Wolfgang Amadeus Mozart
- * @param targetState when optional represents an internal transition
- * @param action optional lambda will be invoked when transition occurs.
+ * @param targetState The state after the transition. When it is `null`, the transition is internal.
+ * @param targetMap The name of the state map for a push transition or a pop transition.
+ * @param automatic `true` if the transition has no event.
+ * @param type The kind of transition.
+ * @param action An optional lambda. The state machine runs it when the transition occurs.
  */
 open class SyncTransition<S, E, C, A, R>(
     val targetState: S? = null,
@@ -34,12 +37,14 @@ open class SyncTransition<S, E, C, A, R>(
 ) {
     init {
         if (type == TransitionType.PUSH) {
-            preconditionNotNull(targetState) { "targetState is required for push transition" }
+            preconditionNotNull(targetState) { "A push transition requires a target state" }
         }
     }
 
     /**
-     * Executed exit, optional and entry actions specific in the transition.
+     * Runs the exit action, the transition action and the entry action in the same state map.
+     * An internal transition does not run the exit action or the entry action.
+     * @return The result of the transition action, or `null` if there is no action.
      */
     open fun execute(context: C, instance: StateMapInstance<S, E, C, A, R>, arg: A?): R? {
 
@@ -54,7 +59,10 @@ open class SyncTransition<S, E, C, A, R>(
     }
 
     /**
-     * Executed exit, optional and entry actions specific in the transition.
+     * Runs the exit action, the transition action and the entry action across two state maps.
+     * The exit action runs in the source map. The entry action runs in the target map.
+     * An internal transition does not run the exit action or the entry action.
+     * @return The result of the transition action, or `null` if there is no action.
      */
     open fun execute(
         context: C,
@@ -74,8 +82,9 @@ open class SyncTransition<S, E, C, A, R>(
     }
 
     /**
-     * This function provides an indicator if a Transition is internal or external.
-     * When there is no targetState defined a Transition is considered internal and will not trigger entry or exit actions.
+     * Checks if the transition is external.
+     * A transition without a target state is internal. An internal transition does not run entry actions or exit actions.
+     * @return `true` if the transition has a target state.
      */
     fun isExternal(): Boolean = targetState != null
 }

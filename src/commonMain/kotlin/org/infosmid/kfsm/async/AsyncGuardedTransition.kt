@@ -19,6 +19,11 @@ import org.infosmid.kfsm.AsyncStateAction
 import org.infosmid.kfsm.StateGuard
 import org.infosmid.kfsm.TransitionType
 
+/**
+ * @suppress
+ * A transition with a guard expression. The state machine uses the transition only when the guard returns `true`.
+ * @param guard A lambda that returns a `Boolean`.
+ */
 open class AsyncGuardedTransition<S, E, C, A, R>(
     startState: S,
     event: E?,
@@ -30,9 +35,10 @@ open class AsyncGuardedTransition<S, E, C, A, R>(
     action: AsyncStateAction<C, A, R>?
 ) : SimpleAsyncTransition<S, E, C, A, R>(startState, event, targetState, targetMap, automatic, type, action) {
     /**
-     * This function will invoke the guard expression using the provided context to determine if transition can be considered.
-     * @param context The provided context
-     * @return result of guard lambda
+     * Runs the guard expression to find out if the transition can be used.
+     * @param context The context that the guard checks.
+     * @param arg The event argument.
+     * @return The result of the guard lambda.
      */
     fun guardMet(context: C, arg: A?): Boolean = guard.invoke(context, arg)
 }

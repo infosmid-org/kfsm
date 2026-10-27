@@ -8,7 +8,7 @@
 
 This work is licensed under link:https://www.apache.org/licenses/LICENSE-2.0.html[Apache License 2.0]
 
-This is a small implementation of an FSM in Kotlin.
+kfsm is a small Kotlin library for finite state machines. It has a Kotlin DSL.
 
 == Resources
 * link:https://infosmid.org/projects/kfsm/index.html[Documentation]
@@ -24,19 +24,20 @@ This is a small implementation of an FSM in Kotlin.
 
 == Getting Started
 
-The state machine implementation supports events triggering transitions from one state to another while performing an optional action as well as entry and exit actions.
+In kfsm, an event can cause a transition from one state to another state.
+A transition can run an action. It can also run an entry action and an exit action.
 
 == Features
-* Event driven state machine.
-* External and internal transitions
-* State entry and exit actions.
-* Default state actions.
-* Default entry and exit actions.
-* Determine allowed events.
-* Multiple state maps with push / pop transitions
-* Automatic transitions
-* Externalisation of state.
-* Typed event parameters and return values.
+* Event-driven state machine.
+* External transitions and internal transitions.
+* Entry actions and exit actions for each state.
+* Default actions for each state.
+* Default entry actions and default exit actions.
+* A query for the allowed events.
+* Multiple state maps with push transitions and pop transitions.
+* Automatic transitions.
+* Externalized state.
+* Typed event arguments and return values.
 
 == Authors
 * http://github.com/corneil[corneil]
@@ -47,28 +48,29 @@ image::https://api.star-history.com/svg?repos=infosmid-org/kfsm&type=Date[Star H
 
 == Todo
 * [x] Multiple state maps
-* [x] Push / pop transitions
+* [x] Push transitions and pop transitions
 * [x] Automatic transitions
-* [x] Externalisation of state
-* [x] Typed event parameters
+* [x] Externalized state
+* [x] Typed event arguments
 * [x] Typed event return values
-* [x] Simple Visualization
-* [x] Detail Visualization
-* [x] Gradle Plugin for Visualization
+* [x] Simple visualization
+* [x] Detailed visualization
+* [x] Gradle plugin for visualization
 * [x] Timeouts
-* [x] Corountines
-* [ ] Different type of contexts for Nested statemaps
+* [x] Coroutines
+* [ ] A different context type for nested state maps
 
 
 
 == Quick Tutorial
-This is the classic turnstile FSM model from [SMC](http://smc.sourceforge.net/)
+This is the classic turnstile state machine from link:http://smc.sourceforge.net/[SMC].
 
 === Simple turnstile example
-Assume we and to manage the state on a simple lock.
-We want to ensure that the `lock()` function is only called when the lock is not locked and we want `unlock()` to be called when locked.
+Assume that you must manage the state of a simple lock.
+The `lock()` function must run only when the lock is not locked.
+The `unlock()` function must run only when the lock is locked.
 
-Then we use the DSL to declare a definition of a statemachine matching the diagram:
+Use the DSL to declare a state machine definition that matches the diagram:
 
 ==== State Diagram
 
@@ -130,7 +132,7 @@ class Turnstile(var locked: Boolean = true) {
 ----
 
 ==== Enums for States and Events
-We declare 2 enums, one for the possible states and one for the possible events.
+Declare two enums. One enum has the states. The other enum has the events.
 
 [source,kotlin,numbered]
 ----
@@ -201,14 +203,14 @@ class TurnstileFSM(turnstile: Turnstile) {
 }
 ----
 
-With this definition we are saying:
-When the state is `LOCKED` and on a `COIN` event then transition to `UNLOCKED` and execute the lambda which is treated
-as a member of the context `{ unlock() }`
+This definition says:
 
-When the state is `LOCKED` and on event `PASS` we perform the action `alarm()` without changing the end state.
+* When the state is `LOCKED` and the event is `COIN`, change to `UNLOCKED` and run the lambda `{ unlock() }`.
+The lambda runs as a member of the context.
+* When the state is `LOCKED` and the event is `PASS`, run the default action `alarm()`. The state stays `LOCKED`.
 
 ==== Usage
-Then we instantiate the FSM and provide a context to operate on:
+Create an instance of the state machine. Give it the context that the actions operate on:
 
 [source,kotlin,numbered]
 ----
@@ -216,31 +218,32 @@ val turnstile = Turnstile()
 val fsm = TurnstileFSM(turnstile)
 ----
 
-Now we have a context that is independent of the FSM.
+The context is independent of the state machine.
 
-Sending events may invoke actions:
+When you send an event, the state machine can run actions:
 [source,kotlin,numbered]
 ----
-// State state is LOCKED
+// The state is LOCKED
 fsm.coin()
-// Expect unlock action end state is UNLOCKED
+// Expect the unlock() action. The new state is UNLOCKED
 fsm.pass()
-// Expect lock() action and end state is LOCKED
+// Expect the lock() action. The new state is LOCKED
 fsm.pass()
-// Expect alarm() action and end state is LOCKED
+// Expect the alarm() action. The state stays LOCKED
 fsm.coin()
-// Expect unlock() and end state is UNLOCKED
+// Expect the unlock() action. The new state is UNLOCKED
 fsm.coin()
-// Expect returnCoin() and end state is UNLOCKED
+// Expect the returnCoin() action. The state stays UNLOCKED
 ----
 
-This model means the FSM can be instantiated as needed if the context has values that represent the state. The idea is that the context will properly maintain it's internal state.
+You can create an instance of the state machine when you need it, if the context has values that represent the state.
+The context must keep its own state correctly.
 
-The FSM can derive the formal state from the value(s) of properties of the context.
+The state machine can derive the state from the values of the properties of the context.
 
-The link:https://infosmid.org/projects/kfsm/index.html[Documentation] contains more detail on creating finite state machine implementations.
+The link:https://infosmid.org/projects/kfsm/index.html[Documentation] has more detail about how to define state machines.
 
-The documentation contains examples for:
+The documentation has examples for:
 
 * link:https://infosmid.org/projects/kfsm/index.html#advanced-features[Turnstile providing for coin values.]
 * link:https://infosmid.org/projects/kfsm/index.html#secure-turnstile-example[Secure turnstile with card and override.]
@@ -249,12 +252,13 @@ The documentation contains examples for:
 
 === Repository
 
-Releases are published to Maven Central and Snapshots are published to Github Packages Maven repositories.
-Contact us for a PAT to resolved snapshot releases.
+Releases are on Maven Central.
+Snapshots are in the GitHub Packages Maven repository.
+Contact us for a personal access token (PAT) to get snapshot releases.
 
 === Dependencies
 
-=== Kotlin Multiplatform (`build.gradle.kts`)
+==== Kotlin Multiplatform (`build.gradle.kts`)
 
 [source,kotlin,subs="attributes+"]
 ----
@@ -271,7 +275,7 @@ kotlin {
 }
 ----
 
-=== Kotlin Multiplatform (`build.gradle` - Groovy DSL)
+==== Kotlin Multiplatform (`build.gradle` - Groovy DSL)
 
 [source,groovy,subs="attributes+"]
 ----
@@ -290,9 +294,9 @@ kotlin {
 }
 ----
 
-=== Single Platform (JVM / Android)
+==== Single Platform (JVM / Android)
 
-==== Kotlin DSL (`build.gradle.kts`)
+===== Kotlin DSL (`build.gradle.kts`)
 
 [source,kotlin,subs="attributes+"]
 ----
@@ -305,7 +309,7 @@ dependencies {
 }
 ----
 
-==== Groovy DSL (`build.gradle`)
+===== Groovy DSL (`build.gradle`)
 
 [source,groovy,subs="attributes+"]
 ----
@@ -321,7 +325,7 @@ dependencies {
 
 == Visualisation
 
-For more information about visualization options use link:https://github.com/infosmid-org/kfsm-viz[kfsm-viz]
+For more information about the visualization options, see link:https://github.com/infosmid-org/kfsm-viz[kfsm-viz].
 
 
 === Plantuml Examples
@@ -344,15 +348,15 @@ link:./src/commonTest/kotlin/org/infosmid/kfsm/example/SecureTurnstile.kt[Secure
 
 image::secure_turnstile.png[]
 
-==== Packer Reader FSM
+==== Packet Reader FSM
 
 link:./src/commonTest/kotlin/org/infosmid/kfsm/example/PacketReaderTests.kt[PacketReaderTests.kt]
 
 image::packet_reader.png[]
 
 
-== Questions:
-* Should entry / exit actions receive state or event as arguments?
-* Should default actions receive state or event as arguments?
-* Is there a more elegant way to define States and Events using sealed classes?
-* Are any features missing from the implementation?
+== Questions
+* Should entry actions and exit actions receive the state or the event as arguments?
+* Should default actions receive the state or the event as arguments?
+* Is there a better way to define states and events with sealed classes?
+* Does the implementation lack any features?

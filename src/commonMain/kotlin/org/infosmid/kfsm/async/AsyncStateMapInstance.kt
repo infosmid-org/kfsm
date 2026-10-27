@@ -19,6 +19,11 @@ import org.infosmid.kfsm.checkInvariant
 import kotlinx.coroutines.CoroutineScope
 import org.infosmid.dbc.precondition
 
+/**
+ * @suppress
+ * An instance of a state map in an asynchronous state machine.
+ * It holds the current state, runs the transitions of the state map and starts and cancels the timers.
+ */
 class AsyncStateMapInstance<S, E, C, A, R>(
     val context: C,
     val newState: S,
@@ -28,7 +33,7 @@ class AsyncStateMapInstance<S, E, C, A, R>(
     val coroutineScope: CoroutineScope
 ) {
     init {
-        precondition(definition.validStates.contains(newState)) { "Initial state is $newState and not in ${definition.validStates}" }
+        precondition(definition.validStates.contains(newState)) { "Initial state $newState is not in the valid states of this state map: ${definition.validStates}" }
         definition.invariants.forEach { checkInvariant(context, it) }
     }
 
@@ -98,15 +103,19 @@ class AsyncStateMapInstance<S, E, C, A, R>(
                 ?: definition.globalDefault
                 ?: parentFsm.definition.defaultStateMap.defaultActions[currentState]
                 ?: parentFsm.definition.defaultStateMap.globalDefault
-                ?: error("Transition from $currentState on $event not defined")
+                ?: error("No transition and no default action for state $currentState and event $event")
         ) {
             invoke(context, currentState, event, arg)
         }
     }
 
     /**
-     * This function will process the on and advance the state machine according to the FSM definition.
-     * @param event The on received,
+     * Sends an event to the current state map.
+     * The state machine runs the matching transition as the definition describes.
+     * @param event The event to process.
+     * @param arg The argument of the event.
+     * @return The result of the transition action, or `null` if the action returns no value.
+     * @throws IllegalStateException if no transition and no default action match the current state and event.
      */
     suspend fun sendEvent(event: E, arg: A? = null): R? {
         return definition.transitionRules[Pair(currentState, event)]?.let { rule ->
@@ -121,14 +130,15 @@ class AsyncStateMapInstance<S, E, C, A, R>(
     }
 
     /**
-     * This function will provide the list of allowed events given the current state of the machine.
-     * @param includeDefaults When `true` will include default transitions in the list of allowed events.
+     * Gets the events that are allowed in the current state.
+     * @param includeDefaults When `true`, the result includes the events of default transitions.
      */
     fun allowed(includeDefaults: Boolean = false) = definition.allowed(currentState, includeDefaults)
 
     /**
-     * This function will provide an indication whether the given event is allowed in the current state.
-     * @param event The given event that will be used in combination with current state.
+     * Checks if an event is allowed in the current state.
+     * @param event The event to check.
+     * @param includeDefault When `true`, the check includes default transitions.
      */
     fun eventAllowed(event: E, includeDefault: Boolean): Boolean =
         definition.eventAllowed(event, currentState, includeDefault)

@@ -21,17 +21,27 @@ import org.infosmid.kfsm.ExternalState
 import org.infosmid.kfsm.Stack
 import org.infosmid.kfsm.TransitionType
 
+/**
+ * An instance of an asynchronous state machine.
+ * The instance processes events. It finds the matching transition and runs the exit action, the transition action and the entry action.
+ * The instance uses a `CoroutineScope` to run timeout transitions.
+ * @param context The context that the actions operate on.
+ * @param definition The definition of the state machine. The definition has all the behaviour.
+ * @param coroutineScope The scope that runs the timeout transitions.
+ * @param initialState The state at the start. When it is `null`, the definition derives the state from the context.
+ * @param initialExternalState A state that was externalised earlier. Use it to restore the state map stack.
+ */
 class AsyncStateMachineInstance<S, E, C, A, R>(
     /**
-     * The transition actions are performed by manipulating the context.
+     * The actions operate on the context.
      */
     private val context: C,
     /**
-     * The Immutable definition of the state machine.
+     * The immutable definition of the state machine.
      */
     val definition: AsyncStateMachineDefinition<S, E, C, A, R>,
     /**
-     * The initialState will be assigned to the currentState
+     * The scope that runs the timeout transitions.
      */
     val coroutineScope: CoroutineScope,
     initialState: S? = null,
@@ -43,19 +53,21 @@ class AsyncStateMachineInstance<S, E, C, A, R>(
         Stack()
 
     /**
-     * This represents the current state of the state machine.
-     * It will be modified during transitions
+     * The current state map. Transitions change it.
      */
     internal var currentStateMap: AsyncStateMapInstance<S, E, C, A, R>
 
+    /**
+     * The current state of the current state map.
+     */
     val currentState: S
         get() = currentStateMap.currentState
 
     /**
-     * Create a state machine using a specific definition and a previous externalised state.
-     * @param context The instane will operate on the context
-     * @param definition The definition of the state machine instance.
-     * @param initialExternalState The previously externalised state.
+     * Creates a state machine instance from a definition and a state that was externalised earlier.
+     * @param context The context that the actions operate on.
+     * @param definition The definition of the state machine.
+     * @param initialExternalState The state that was externalised earlier.
      */
     constructor(
         context: C,
@@ -88,8 +100,8 @@ class AsyncStateMachineInstance<S, E, C, A, R>(
 
     internal suspend fun execute(transition: AsyncTransition<S, E, C, A, R>, arg: A?): R? {
         val result = if (transition.type == TransitionType.PUSH) {
-            preconditionNotNull(transition.targetState) { "Target state cannot be null for pushTransition" }
-            preconditionNotNull(transition.targetMap) { "Target map cannot be null for pushTransition" }
+            preconditionNotNull(transition.targetState) { "A push transition requires a target state" }
+            preconditionNotNull(transition.targetMap) { "A push transition requires a target map" }
             if (transition.targetMap != currentStateMap.name) {
                 executePush(transition, arg)
             } else {
@@ -143,29 +155,36 @@ class AsyncStateMachineInstance<S, E, C, A, R>(
     }
 
     /**
-     * This function will provide the set of allowed events given a specific state. It isn't a guarantee that a
-     * subsequent transition will be successful since a guard may prevent a transition. Default state handlers are not considered.
-     * @param includeDefault When `true` will include default transitions in the list of allowed events.
+     * Gets the events that are allowed in the current state.
+     * An allowed event does not guarantee a transition, because a guard can prevent the transition.
+     * Default actions are not included.
+     * @param includeDefault When `true`, the result includes the events of default transitions.
+     * @return The set of allowed events.
      */
     fun allowed(includeDefault: Boolean = false): Set<E> = currentStateMap.allowed(includeDefault)
 
     /**
-     * This function will return an indicator if the given event is allowed given the current state.
-     * @param event The given event.
-     * @param includeDefault Will consider defined default event handlers.
+     * Checks if an event is allowed in the current state.
+     * @param event The event to check.
+     * @param includeDefault When `true`, the check includes default transitions.
+     * @return `true` if the event is allowed.
      */
     fun eventAllowed(event: E, includeDefault: Boolean): Boolean =
         currentStateMap.eventAllowed(event, includeDefault)
 
     /**
-     * This function will process the on and advance the state machine according to the FSM definition.
-     * @param event The on received,
+     * Sends an event to the current state map.
+     * The state machine runs the matching transition as the definition describes.
+     * @param event The event to process.
+     * @param arg The argument of the event.
+     * @return The result of the transition action, or `null` if the action returns no value.
+     * @throws IllegalStateException if no transition and no default action match the current state and event.
      */
     suspend fun sendEvent(event: E, arg: A? = null) = currentStateMap.sendEvent(event, arg)
 
     /**
-     * This function will provide the external state that can be use when creating the instance at a later time.
-     * @return The external state a collection of state and map name pairs.
+     * Gets the state that you can store and use to create an instance later.
+     * @return A list of pairs of a state and a state map name. The first pair is the bottom of the stack and the last pair is the current state map.
      */
     fun externalState(): ExternalState<S> {
         return mapStack.peekContent()

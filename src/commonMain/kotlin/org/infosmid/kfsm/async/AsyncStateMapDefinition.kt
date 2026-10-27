@@ -20,71 +20,78 @@ import org.infosmid.kfsm.Condition
 import org.infosmid.kfsm.DefaultAsyncStateAction
 import org.infosmid.kfsm.DefaultEntryExitAction
 
+/**
+ * The definition of a state map for an asynchronous state machine.
+ * A state map is a group of states with their transitions and actions.
+ * A state machine has one top-level state map and can have named state maps.
+ */
 class AsyncStateMapDefinition<S, E, C, A, R>(
     /**
-     * The name of the statemap. The top-level state map name is `null`
+     * The name of the state map. The name of the top-level state map is `null`.
      */
     val name: String?,
     /**
-     * A set of the valid states for this map.
+     * The set of states that this state map allows.
      */
     val validStates: Set<S>,
     /**
-     * Invariant conditions are checked before and after every transition and will throw an InvariantException if false
+     * The invariants. The state machine checks them before and after every transition.
+     * It throws an `InvariantException` when a condition is `false`.
      */
     val invariants: Set<Pair<String, Condition<C>>>,
     /**
-     * transitionRule contains a map of TransitionRules that is keyed by a Pair of state,event
-     * This will be the most common transition rule.
+     * The transition rules, by pair of state and event.
+     * Most transitions are in this map.
      */
     val transitionRules: Map<Pair<S, E>, AsyncTransitionRules<S, E, C, A, R>>,
     /**
-     * The default transitions will be used if no transition of found matching a given event
+     * The default transitions, by event. The state machine uses a default transition when no transition matches the state and the event.
      */
     val defaultTransitions: Map<E, DefaultAsyncTransition<S, E, C, A, R>>,
     /**
-     * This is a map of actions keyed by the state. A specific action will be invoked when a state is entered.
+     * The entry actions, by state. The state machine runs the entry action when it enters the state.
      */
     val entryActions: Map<S, DefaultEntryExitAction<C, S, A>>,
     /**
-     * This is a map of actions keyed by the state. A specific action will be invoked when a state is exited.
+     * The exit actions, by state. The state machine runs the exit action when it leaves the state.
      */
     val exitActions: Map<S, DefaultEntryExitAction<C, S, A>>,
     /**
-     * This is a map of default actions for event on specific startState.
+     * The default actions, by state. The state machine runs the default action when no transition matches the state and the event.
      */
     val defaultActions: Map<S, DefaultAsyncStateAction<C, S, E, A, R>>,
     /**
-     * This a map of TransitionRules by state for automatic transitions.
+     * The transition rules for automatic transitions, by state.
      */
     val automaticTransitions: Map<S, AsyncTransitionRules<S, E, C, A, R>>,
     /**
-     * The timer definitions will be activated on entry to state and deactivated on state exit
+     * The timer definitions, by state. The state machine starts the timers when it enters the state and cancels them when it leaves the state.
      */
     val timerDefinitions: Map<S, AsyncTimerDefinition<S, E, C, A, R>>,
     /**
-     * This is the action that will be invoked of no other has been matched
+     * The default action for the state map. The state machine runs it when no other action matches.
      */
     val globalDefault: DefaultAsyncStateAction<C, S, E, A, R>?,
     /**
-     * This is the default action that will be invoked when entering any state when no other action has been matched.
+     * The default entry action. The state machine runs it when it enters any state, after the entry action of the state.
      */
     val defaultEntryAction: DefaultEntryExitAction<C, S, A>?,
     /**
-     * This is the default action that will be invoked when exiting any state when no other action has been matched.
+     * The default exit action. The state machine runs it when it leaves any state, after the exit action of the state.
      */
     val defaultExitAction: DefaultEntryExitAction<C, S, A>?,
     /**
-     * This action will be invoked after a change in the state of the statemachine.
-     * This machine will catch and ignore any exceptions thrown by the handler.
+     * The action that the state machine runs after the state has changed.
+     * The state machine catches an exception from the action and does not rethrow it.
      */
     val afterStateChangeAction: AsyncStateChangeAction<C, S>?
 ) {
     /**
-     * This function will provide the set of allowed events given a specific state. It isn't a guarantee that a
-     * subsequent transition will be successful since a guard may prevent a transition. Default state handlers are not considered.
-     * @param given The specific state to consider
-     * @param includeDefault When `true` will include default transitions in the list of allowed events.
+     * Gets the events that are allowed in the current state.
+     * An allowed event does not guarantee a transition, because a guard can prevent the transition.
+     * Default actions are not included.
+     * @param includeDefault When `true`, the result includes the events of default transitions.
+     * @return The set of allowed events.
      */
     fun allowed(given: S, includeDefault: Boolean = false): Set<E> {
         val result = transitionRules.entries.filter {
@@ -99,9 +106,12 @@ class AsyncStateMapDefinition<S, E, C, A, R>(
     }
 
     /**
-     * This function will provide an indicator if an event is allowed for a given state.
-     * When no state transition is declared this function will return false unless `includeDefault` is true and
-     * there is a default transition of handler for the event.
+     * Checks if an event is allowed in a state.
+     * The result is `false` when the state has no transition for the event.
+     * The exception is when `includeDefault` is `true` and the state has a default action or a default transition for the event.
+     * @param event The event to check.
+     * @param given The state to check.
+     * @param includeDefault When `true`, the check includes default actions and default transitions.
      */
     fun eventAllowed(event: E, given: S, includeDefault: Boolean): Boolean =
         (includeDefault &&
@@ -109,7 +119,7 @@ class AsyncStateMapDefinition<S, E, C, A, R>(
             allowed(given, includeDefault).contains(event)
 
     /**
-     * This function will provide an indicator if a default action has been defined for a given state.
+     * Checks if the state has a default action.
      */
     private fun hasDefaultStateHandler(given: S) = defaultActions.contains(given)
 }

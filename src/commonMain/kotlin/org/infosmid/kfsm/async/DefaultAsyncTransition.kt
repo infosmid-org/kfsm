@@ -18,6 +18,11 @@ package org.infosmid.kfsm.async
 import org.infosmid.kfsm.AsyncStateAction
 import org.infosmid.kfsm.TransitionType
 
+/**
+ * @suppress
+ * A transition for an event that no other transition handles in the state map.
+ * @param event The event that identifies the transition.
+ */
 class DefaultAsyncTransition<S, E, C, A, R>(
     internal val event: E,
     targetState: S?,

@@ -18,15 +18,16 @@ package org.infosmid.kfsm
 import kotlin.reflect.KClass
 
 /**
- * Defines the start of a state machine DSL declaration
+ * Starts the DSL declaration of a state machine.
  * @author Corneil du Plessis
  * @soundtrack Wolfgang Amadeus Mozart
- * @param validStates A set of the possible states supported by the top-level state map
- * @param validEvents The class of the possible events
- * @param contextClass The class of the context
- * @param argumentClass The class of the argument to events/actions
- * @param returnClass The class of the return type of events/actions
- * @param handler Statemachine handler
+ * @param validStates The set of states that the default state map allows.
+ * @param validEvents The set of events of the state machine.
+ * @param contextClass The class of the context.
+ * @param argumentClass The class of the event argument.
+ * @param returnClass The class of the return value of the actions.
+ * @param handler The lambda that declares the state machine.
+ * @return The DSL handler. Call `build()` on it to create the definition.
  * @sample org.infosmid.kfsm.example.TurnstileFSM.Companion.definition
  */
 inline fun <reified S, reified E, reified C : Any, reified A : Any, reified R : Any> stateMachine(
@@ -39,11 +40,12 @@ inline fun <reified S, reified E, reified C : Any, reified A : Any, reified R : 
 ) = StateMachineBuilder<S, E, C, A, R>(validStates, validEvents).stateMachine(handler)
 
 /**
- * Defines the start of a state machine DSL declaration with `Any` as the return type
- * @param validStates A set of the possible states supported by the top-level state map
- * @param eventClass The class of the possible events
- * @param contextClass The class of the context
- * @param argumentClass The class of the argument to events/actions
+ * Starts the DSL declaration of a state machine. The return type of the actions is `Any`.
+ * @param validStates The set of states that the default state map allows.
+ * @param validEvents The set of events of the state machine.
+ * @param contextClass The class of the context.
+ * @param argumentClass The class of the event argument.
+ * @param handler The lambda that declares the state machine.
  * @sample org.infosmid.kfsm.example.TurnstileFSM.Companion.definition
  */
 inline fun <reified S, reified E, reified C : Any, reified A : Any> stateMachine(
@@ -62,11 +64,11 @@ inline fun <reified S, reified E, reified C : Any, reified A : Any> stateMachine
 )
 
 /**
- * Defines the start of a state machine DSL declaration with `Any` as the type of arguments and returns types for events/actions
- * @param validStates A set of the possible states supported by the top-level state map
- * @param validEvents The class of the possible events
- * @param contextClass The class of the context
- * @param handler The DSL handler
+ * Starts the DSL declaration of a state machine. The type of the event argument and the return type of the actions are `Any`.
+ * @param validStates The set of states that the default state map allows.
+ * @param validEvents The set of events of the state machine.
+ * @param contextClass The class of the context.
+ * @param handler The lambda that declares the state machine.
  * @sample org.infosmid.kfsm.example.TurnstileFSM.definition
  */
 inline fun <reified S, reified E, reified C : Any> stateMachine(
@@ -83,6 +85,14 @@ inline fun <reified S, reified E, reified C : Any> stateMachine(
     handler
 )
 
+/**
+ * Starts the DSL declaration of a state machine where the context, the event argument and the return value have the same type.
+ * Use it with an immutable context. An action returns the new context.
+ * @param validStates The set of states that the default state map allows.
+ * @param validEvents The set of events of the state machine.
+ * @param contextClass The class of the context.
+ * @param handler The lambda that declares the state machine.
+ */
 inline fun <reified S, reified E, reified C : Any> functionalStateMachine(
     validStates: Set<S>,
     validEvents: Set<E>,

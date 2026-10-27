@@ -16,39 +16,43 @@
 package org.infosmid.kfsm
 
 /**
- * This handler will be active inside the default section of the statemachine.
+ * The DSL receiver inside a `default` block.
  * @author Corneil du Plessis
  * @soundtrack Wolfgang Amadeus Mozart
  */
 class DslStateMapDefaultEventHandler<S, E, C, A, R>(private val fsm: StateMapBuilder<S, E, C, A, R>) {
     /**
-     * Define a default action that will be applied when no other transitions are matched.
-     * @param action Will be invoked when no transitions match
+     * Declares the default action. The state machine runs it when no other transition matches.
+     * @param action The lambda to run when no transition matches.
      */
     fun action(action: DefaultStateAction<C, S, E, A, R>) {
         fsm.defaultAction(action)
     }
 
     /**
-     * Defines an action to perform before a change in the currentState of the FSM
-     * @param action This action will be performed when entering a new state.
+     * Declares the default entry action.
+     * The state machine runs it for an external transition, after the entry action of the target state.
+     * The state has not changed when the action runs.
+     * @param action The lambda to run when the state machine enters a state.
      */
     fun onEntry(action: DefaultEntryExitAction<C, S, A>) {
         fsm.defaultEntry(action)
     }
 
     /**
-     * Defines an action to be performed after the currentState was changed.
-     * @param action The action will be performed when leaving any state.
+     * Declares the default exit action.
+     * The state machine runs it for an external transition, after the exit action of the current state.
+     * The state has not changed when the action runs.
+     * @param action The lambda to run when the state machine leaves a state.
      */
     fun onExit(action: DefaultEntryExitAction<C, S, A>) {
         fsm.defaultExit(action)
     }
 
     /**
-     * Defines a default transition when an on is received to a specific state.
-     * @param event Pair representing an on and targetState for transition. Can be written as EVENT to STATE
-     * @param action The action will be performed before transition is completed
+     * Declares a default external transition for an event. It applies to every state that has no transition for the event.
+     * @param event A pair of the event and the target state. Write it as `EVENT to STATE`.
+     * @param action The lambda to run during the transition.
      */
     fun onEvent(
         event: EventState<E, S>,
@@ -59,9 +63,10 @@ class DslStateMapDefaultEventHandler<S, E, C, A, R>(private val fsm: StateMapBui
     }
 
     /**
-     * Defines a default internal transition for a specific event with no change in state.
-     * @param event The event that triggers this transition
-     * @param action The action will be invoked for this transition
+     * Declares a default internal transition for an event. The state does not change.
+     * It applies to every state that has no transition for the event.
+     * @param event The event that triggers the transition.
+     * @param action The lambda to run during the transition.
      */
     fun onEvent(event: E, action: SyncStateAction<C, A, R>?): DslStateMapDefaultEventHandler<S, E, C, A, R> {
         fsm.default(event, action)

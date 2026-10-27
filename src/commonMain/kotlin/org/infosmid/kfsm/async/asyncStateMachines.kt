@@ -18,7 +18,14 @@ package org.infosmid.kfsm.async
 import kotlin.reflect.KClass
 
 /**
- * These function are used to create state machines where the actions are suspend functions.
+ * Starts the DSL declaration of a state machine where the actions are `suspend` functions.
+ * @param validStates The set of states that the default state map allows.
+ * @param validEvents The set of events of the state machine.
+ * @param contextClass The class of the context.
+ * @param argumentClass The class of the event argument.
+ * @param returnClass The class of the return value of the actions.
+ * @param handler The lambda that declares the state machine.
+ * @return The DSL handler. Call `build()` on it to create the definition.
  */
 inline fun <reified S, reified E, reified C : Any, reified A : Any, reified R : Any> asyncStateMachine(
     validStates: Set<S>,
@@ -30,12 +37,12 @@ inline fun <reified S, reified E, reified C : Any, reified A : Any, reified R : 
 ) = AsyncStateMachineBuilder<S, E, C, A, R>(validStates, validEvents).stateMachine(handler)
 
 /**
- * Defines the start of a state machine DSL declaration with `Any` as the return type
- * @param validStates A set of the possible states supported by the top-level state map
- * @param validEvents The class of the possible events*
- * @param contextClass The class of the context
- * @param argumentClass The class of the argument to events/actions
- * @param handler The state machine handler
+ * Starts the DSL declaration of a state machine where the actions are `suspend` functions. The return type of the actions is `Any`.
+ * @param validStates The set of states that the default state map allows.
+ * @param validEvents The set of events of the state machine.
+ * @param contextClass The class of the context.
+ * @param argumentClass The class of the event argument.
+ * @param handler The lambda that declares the state machine.
  * @sample org.infosmid.kfsm.example.TurnstileFSM.Companion.definition
  */
 inline fun <reified S, reified E, reified C : Any, reified A : Any> asyncStateMachine(
@@ -47,10 +54,12 @@ inline fun <reified S, reified E, reified C : Any, reified A : Any> asyncStateMa
 ) = asyncStateMachine<S, E, C, A, Any>(validStates, validEvents, contextClass, argumentClass, Any::class, handler)
 
 /**
- * Defines the start of a state machine DSL declaration with `Any` as the type of arguments and returns types for events/actions
- * @param validStates A set of the possible states supported by the top-level state map
- * @param validEvents The class of the possible events
- * @param contextClass The class of the context
+ * Starts the DSL declaration of a state machine where the actions are `suspend` functions.
+ * The type of the event argument and the return type of the actions are `Any`.
+ * @param validStates The set of states that the default state map allows.
+ * @param validEvents The set of events of the state machine.
+ * @param contextClass The class of the context.
+ * @param handler The lambda that declares the state machine.
  * @sample org.infosmid.kfsm.example.TurnstileFSM.Companion.definition
  */
 inline fun <reified S, reified E, reified C : Any> asyncStateMachine(
@@ -60,6 +69,14 @@ inline fun <reified S, reified E, reified C : Any> asyncStateMachine(
     handler: AsyncDslStateMachineHandler<S, E, C, Any, Any>.() -> Unit
 ) = asyncStateMachine<S, E, C, Any, Any>(validStates, validEvents, contextClass, Any::class, Any::class, handler)
 
+/**
+ * Starts the DSL declaration of a state machine where the actions are `suspend` functions.
+ * The context, the event argument and the return value have the same type.
+ * @param validStates The set of states that the default state map allows.
+ * @param validEvents The set of events of the state machine.
+ * @param contextClass The class of the context.
+ * @param handler The lambda that declares the state machine.
+ */
 inline fun <reified S, reified E, reified C : Any> asyncFunctionalStateMachine(
     validStates: Set<S>,
     validEvents: Set<E>,
@@ -68,7 +85,11 @@ inline fun <reified S, reified E, reified C : Any> asyncFunctionalStateMachine(
 ) = AsyncStateMachineBuilder<S, E, C, C, C>(validStates, validEvents).stateMachine(handler)
 
 /**
- * An extension function that evaluates the expression and invokes the provided `block` if true or the `otherwise` block is false.
+ * Runs `block` on the receiver when the expression is `true`. Otherwise it runs `otherwise` on the receiver.
+ * @param expression The condition to check.
+ * @param block The lambda to run when the expression is `true`.
+ * @param otherwise The lambda to run when the expression is `false`.
+ * @return The receiver.
  */
 inline fun <T> T.ifApply(expression: Boolean, block: T.() -> Unit, otherwise: T.() -> Unit): T {
     return if (expression) {

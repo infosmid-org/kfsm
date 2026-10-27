@@ -21,108 +21,139 @@ import org.infosmid.dbc.PreConditionException
 import org.infosmid.dbc.precondition
 
 /**
- * This represents an action that may be invoked during a transition.
+ * An action that the state machine runs during a transition.
+ * The context is the receiver (`this`) of the lambda.
  * @author Corneil du Plessis
  * @soundtrack Wolfgang Amadeus Mozart
- * @param C The context: C will be available to the lambda.
- * @param A The type of the argument to the action
- * @param R The return type of the action
+ * @param C The context type. The lambda uses it as `this`.
+ * @param A The type of the event argument.
+ * @param R The type of the return value.
  */
 typealias SyncStateAction<C, A, R> = C.(A?) -> R?
 
+/**
+ * The `suspend` version of [SyncStateAction].
+ * @param C The context type. The lambda uses it as `this`.
+ * @param A The type of the event argument.
+ * @param R The type of the return value.
+ */
 typealias AsyncStateAction<C, A, R> = suspend C.(A?) -> R?
 
 /**
- * This represents a guard expression that may be used to select a specific transition.
- * @param C The context: C will be available to the lambda
- * @param A The type of the argument to the action
+ * A guard expression. The state machine uses it to select a transition.
+ * The transition is selected only when the guard returns `true`.
+ * @param C The context type. The lambda uses it as `this`.
+ * @param A The type of the event argument.
  */
 typealias StateGuard<C, A> = C.(A?) -> Boolean
 
 /**
- * This represents an expression to determine the state of the context. This is useful when creating an instance of a
- * statemachine multiple times during the lifecycle of a context represented by a persisted or serializable entity.
- * @param C The context:C will be available to the lambda.
- * @param S The type of the state that should be returned by the lambda.
+ * An expression that derives the current state from the context.
+ * Use it when you create more than one state machine instance for the same context.
+ * For example, the context can be a persisted or serializable entity.
+ * @param C The context type. The lambda uses it as `this`.
+ * @param S The type of the state that the lambda returns.
  */
 typealias StateQuery<C, S> = (C.() -> S)
 
 /**
- * Alias for a pair of S, String
+ * A pair of a state and the name of its state map.
  */
 typealias StateMapItem<S> = Pair<S, String>
 
 /**
- * Alias for a list of pairs of S,String
+ * A list of [StateMapItem]. The first item is the bottom of the state map stack.
  */
 typealias StateMapList<S> = List<StateMapItem<S>>
 
 /**
- * Alias for a lambda that will have the context as this and return a `StateMapList`
+ * An expression that derives the state map stack from the context.
+ * The context is the receiver (`this`) of the lambda. The lambda returns a [StateMapList].
  */
 typealias StateMapQuery<C, S> = (C.() -> StateMapList<S>)
 
 /**
- * This represents a default action that will be invoked when entering or exiting a state with an external state transitions.
- * @param C The context: C will be available to the lambda
- * @param S currentState: S and targetState: S will be available to the lambda as 1st and 2nd arguments.
- * @param A argumentType: A will be available to the lambda as the 3rd argument.
+ * A default entry action or exit action.
+ * The state machine runs it for an external transition.
+ * @param C The context type. The lambda uses it as `this`.
+ * @param S The lambda receives the current state as the first argument and the target state as the second argument.
+ * @param A The lambda receives the event argument as the third argument.
  */
 typealias DefaultEntryExitAction<C, S, A> = C.(S, S, A?) -> Unit
+
+/**
+ * An action that the state machine runs after a transition when the state has changed.
+ * The lambda receives the previous state as the first argument and the new state as the second argument.
+ * @param C The context type. The lambda uses it as `this`.
+ * @param S The state type.
+ */
 typealias StateChangeAction<C, S> = C.(S, S) -> Unit
+
+/**
+ * The `suspend` version of [StateChangeAction].
+ * @param C The context type. The lambda uses it as `this`.
+ * @param S The state type.
+ */
 typealias AsyncStateChangeAction<C, S> = suspend C.(S, S) -> Unit
 
 /**
- * This represents a default action for a specific event. These action will not cause changes in state.
- * They are internal transitions.
- * @param C The context: C will be available to the lambda
- * @param S The currentState:S will be available to the lambda
- * @param E The event: E will be available to the lambda
- * @param A argumentType: A will be available to the lambda as the 3rd argument.
+ * A default action. The state machine runs it when no other transition matches the current state and event.
+ * A default action does not change the state. It is an internal transition.
+ * @param C The context type. The lambda uses it as `this`.
+ * @param S The lambda receives the current state as the first argument.
+ * @param E The lambda receives the event as the second argument.
+ * @param A The lambda receives the event argument as the third argument.
+ * @param R The type of the return value.
  */
 typealias DefaultStateAction<C, S, E, A, R> = C.(S, E, A?) -> R?
 
+/**
+ * The `suspend` version of [DefaultStateAction].
+ */
 typealias DefaultAsyncStateAction<C, S, E, A, R> = suspend C.(S, E, A?) -> R?
 
 /**
- * This represents an event and targetState pair that can be written as `event to state`
- * @param E The event: E will be the first element of the pair
- * @param S The targetState: S will be the second element of the pair.
+ * A pair of an event and a target state. Write it as `event to state`.
+ * @param E The event type. It is the first element of the pair.
+ * @param S The target state type. It is the second element of the pair.
  */
 typealias EventState<E, S> = Pair<E, S>
 
 /**
- * Represents the state of one or more pushed state maps and can be stored and used to initialise the state machine.
+ * The state of the state machine. It has one item for each state map on the stack.
+ * You can store it and use it later to create a state machine instance.
  */
 typealias ExternalState<S> = StateMapList<S>
 
 /**
- * Represents the different kinds of transitions.
+ * The kinds of transition.
  */
 enum class TransitionType {
     /**
-     * Transitions are triggered and may change to a new state or remain at the same state while performing an action.
+     * An event triggers the transition. The transition can change the state or keep the same state. It can run an action.
      */
     NORMAL,
 
     /**
-     * A push transition will place the current state map on a stack and make the named statemap the current map and change to the given state,
+     * A push transition puts the current state map on the stack.
+     * The named state map becomes the current state map, and the state changes to the target state.
      */
     PUSH,
 
     /**
-     * A pop transition will pop the stack and make the transition current. If the pop transition provided a new targetMap or targetState that will result in push or normal transition behaviour.
+     * A pop transition removes the current state map from the stack. The previous state map becomes the current state map.
+     * If the pop transition has a target map or a target state, a push transition or a normal transition follows.
      */
     POP,
 
     /**
-     * A default transition will take place when no configured state/event pair matches.
+     * A default transition runs when no configured state and event pair matches.
      */
     DEFAULT,
 
     /**
-     * A timeout may trigger a transition if the timeout occurs. The timeout will be cancelled when the state exit action is triggered.
-     *
+     * A timeout transition runs when the configured time expires after the state is entered.
+     * The state machine cancels the timeout when it runs the exit action of the state.
      */
     TIMEOUT
 }
@@ -130,7 +161,10 @@ enum class TransitionType {
 typealias Condition<C> = C.() -> Boolean
 
 /**
- * Used by state machine execution to check invariant conditions.
+ * Checks the invariant of the state machine.
+ * @param context The context that the condition checks.
+ * @param condition A pair of the invariant message and the condition. When it is `null`, the check passes.
+ * @throws InvariantException if the condition returns `false`.
  */
 @Throws(InvariantException::class)
 fun <C> checkInvariant(context: C, condition: Pair<String, Condition<C>>?) {
@@ -140,49 +174,49 @@ fun <C> checkInvariant(context: C, condition: Pair<String, Condition<C>>?) {
 }
 
 /**
- * This class implements a simple generic stack.
+ * A simple generic stack.
  */
 class Stack<T> {
     private val elements: MutableList<T> = mutableListOf()
 
     /**
      * Push an element onto the stack.
-     * @param value The element will be pushed
+     * @param value The element to push.
      */
     fun push(value: T) = elements.add(value)
 
     /**
-     * Returns and removed the element on the top of the stack.
-     * @return The element on the top of the stack
-     * @throws PreConditionException if the stack is empty
+     * Removes the element at the top of the stack and returns it.
+     * @return The element that was at the top of the stack.
+     * @throws PreConditionException if the stack is empty.
      */
     @Throws(PreConditionException::class)
     fun pop(): T {
-        precondition(isNotEmpty()) { "stack is empty" }
+        precondition(isNotEmpty()) { "The state map stack is empty" }
         return elements.removeAt(elements.lastIndex)
     }
 
     /**
-     * Indicates that the stack is empty.
-     * @return true if the stack is empty
+     * Checks if the stack is empty.
+     * @return `true` if the stack is empty.
      */
     fun isEmpty() = elements.isEmpty()
 
     /**
-     * Indicates that the stack is not empty.
-     * @return true if the stack is not empty
+     * Checks if the stack is not empty.
+     * @return `true` if the stack is not empty.
      */
     fun isNotEmpty() = elements.isNotEmpty()
 
     /**
-     * Provides access to the top of the stack.
-     * @return the element at the top of the stack without removing or `null` is the stack is empty.
+     * Reads the top of the stack without removing it.
+     * @return The element at the top of the stack, or `null` if the stack is empty.
      */
     fun peek(): T? = elements.lastOrNull()
 
     /**
-     * Provides access to all the entries on the stack.
-     * @return An immutable list of entries with the top of the stack at the end.
+     * Reads all the elements on the stack.
+     * @return A copy of the elements. The top of the stack is the last element.
      */
     fun peekContent(): List<T> = elements.toList()
 }

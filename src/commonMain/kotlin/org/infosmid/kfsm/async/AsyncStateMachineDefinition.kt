@@ -20,16 +20,20 @@ import org.infosmid.kfsm.StateMapQuery
 import org.infosmid.kfsm.StateQuery
 import kotlinx.coroutines.CoroutineScope
 
+/**
+ * The immutable definition of an asynchronous state machine.
+ * You can share one definition. Create an instance of the state machine for each context.
+ */
 class AsyncStateMachineDefinition<S, E, C, A, R>(
     val defaultInitialState: S?,
     private val deriveInitialState: StateQuery<C, S>?,
     private val deriveInitialMap: StateMapQuery<C, S>?,
     /**
-     * The top level state map will be created when the state machine is created.
+     * The top-level state map. Each instance creates it when the instance is created.
      */
     val defaultStateMap: AsyncStateMapDefinition<S, E, C, A, R>,
     /**
-     * The named state maps can be accessed via a push transition.
+     * The named state maps, by name. A push transition makes a named state map current.
      */
     val namedStateMaps: Map<String, AsyncStateMapDefinition<S, E, C, A, R>>
 
@@ -53,7 +57,7 @@ class AsyncStateMachineDefinition<S, E, C, A, R>(
                 )
             )
         } else {
-            val stateMap = namedStateMaps[mapName] ?: error("Invalid map $mapName")
+            val stateMap = namedStateMaps[mapName] ?: error("State map $mapName does not exist")
             parentFsm.pushMap(
                 AsyncStateMapInstance(
                     context,
@@ -68,9 +72,16 @@ class AsyncStateMachineDefinition<S, E, C, A, R>(
     }
 
     /**
-     * This function will create a state machine instance provided with content and optional initialState.
-     * @param context The context will be provided to actions
-     * @param initialState If this is not provided the function defined in `initial` will be invoked to derive the initialState.
+     * Creates the current state map of an instance.
+     * The order of precedence for the initial state is:
+     * 1. The external state.
+     * 2. The `initialStates` expression.
+     * 3. The `initialState` argument.
+     * 4. The `initialState` expression.
+     * 5. The default initial state.
+     * @param context The context that the actions operate on.
+     * @param initialState The initial state. When it is `null`, the definition derives the state.
+     * @throws IllegalStateException if the definition cannot find an initial state.
      */
     internal fun create(
         context: C,
@@ -96,7 +107,7 @@ class AsyncStateMachineDefinition<S, E, C, A, R>(
 
             else -> {
                 val initial = initialState ?: deriveInitialState?.invoke(context) ?: defaultInitialState
-                ?: error("Definition requires deriveInitialState or deriveInitialMap")
+                ?: error("The state machine has no initial state. Give an initial state to create(), or define initialState, initialStates or defaultInitialState")
                 return AsyncStateMapInstance(
                     context,
                     initial,
@@ -121,14 +132,15 @@ class AsyncStateMachineDefinition<S, E, C, A, R>(
             initialState,
             name,
             parentFsm,
-            namedStateMaps[name] ?: error("Named map $name not found"),
+            namedStateMaps[name] ?: error("State map $name does not exist"),
             coroutineScope
         )
 
     /**
-     * This function will create a state machine instance and set it to the state to a previously externalised state.
-     * @param context The instance will operate on the provided context
-     * @param initialExternalState The previously externalised state
+     * Creates a state machine instance with a state that was externalised earlier.
+     * @param context The context that the actions operate on.
+     * @param initialExternalState The state that was externalised earlier. See [AsyncStateMachineInstance.externalState].
+     * @return The new instance.
      */
     fun create(
         context: C,
@@ -144,10 +156,10 @@ class AsyncStateMachineDefinition<S, E, C, A, R>(
         )
 
     /**
-     * This function will create a state machine instance and set it to the initial state.
-     * @param context The instance will operate on the provided context
-     * @param initial The initial state
-     *
+     * Creates a state machine instance.
+     * @param context The context that the actions operate on.
+     * @param initial The initial state. When it is `null`, the definition derives the state from the context.
+     * @return The new instance.
      */
     fun create(
         context: C,
@@ -157,10 +169,12 @@ class AsyncStateMachineDefinition<S, E, C, A, R>(
         AsyncStateMachineInstance<S, E, C, A, R>(context, this, coroutineScope, initial)
 
     /**
-     * This function will provide a list of possible events given a specific state.
-     * The actual events may fail because of guard conditions or named state maps and the default state map behaviour being different.
-     * @param state The given state
-     * @param includeDefault consider the default state and event handlers
+     * Gets the events that are possible for a state in all the state maps.
+     * An event can still fail, because a guard can prevent the transition.
+     * The result also depends on which state map is current, because each state map has its own transitions.
+     * @param state The state to check.
+     * @param includeDefault When `true`, the result includes the events of default transitions.
+     * @return The set of possible events.
      */
     fun possibleEvents(state: S, includeDefault: Boolean): Set<E> {
         val result = mutableSetOf<E>()

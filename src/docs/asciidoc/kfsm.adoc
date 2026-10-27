@@ -1,9 +1,10 @@
 === Simple turnstile example
 
-Assume we and to manage the state on a simple lock.
-We want to ensure that the `lock()` function is only called when the lock is not locked, and we want `unlock()` to be called when locked.
+Assume that you must manage the state of a simple lock.
+The `lock()` function must run only when the lock is not locked.
+The `unlock()` function must run only when the lock is locked.
 
-Then we use the DSL to declare a definition of a statemachine matching the diagram:
+Use the DSL to declare a state machine definition that matches the diagram:
 
 ==== State Diagram
 
@@ -44,7 +45,7 @@ include::../../commonTest/kotlin/org/infosmid/kfsm/example/TurnstileTypes.kt[tag
 
 ==== Enums for States and Events
 
-We declare 2 enums, one for the possible states and one for the possible events.
+Declare two enums. One enum has the states. The other enum has the events.
 
 [source,kotlin,numbered]
 ----
@@ -60,7 +61,7 @@ include::../../commonTest/kotlin/org/infosmid/kfsm/example/TurnstileTypes.kt[tag
 
 ==== Usage
 
-Then we instantiate the FSM and provide a context to operate on:
+Create an instance of the state machine. Give it the context that the actions operate on:
 
 [source,kotlin,numbered]
 ----
@@ -68,39 +69,40 @@ val turnstile = Turnstile()
 val fsm = TurnstileFSM(turnstile)
 ----
 
-Now we have a context that is independent of the FSM.
+The context is independent of the state machine.
 
-Sending events may invoke actions:
+When you send an event, the state machine can run actions:
 
 [source,kotlin,numbered]
 ----
-// State is LOCKED
+// The state is LOCKED
 fsm.coin()
-// Expect unlock action end state is UNLOCKED
+// Expect the unlock() action. The new state is UNLOCKED
 fsm.pass()
-// Expect lock() action and end state is LOCKED
+// Expect the lock() action. The new state is LOCKED
 fsm.pass()
-// Expect alarm() action and end state is LOCKED
+// Expect the alarm() action. The state stays LOCKED
 fsm.coin()
-// Expect unlock() and end state is UNLOCKED
+// Expect the unlock() action. The new state is UNLOCKED
 fsm.coin()
-// Expect returnCoin() and end state is UNLOCKED
+// Expect the returnCoin() action. The state stays UNLOCKED
 ----
 
 link:https://github.com/infosmid-org/kfsm-samples[Samples]
 
 === Advanced Features
 
-We can add an argument to events and use named state maps with push / pop and automatic transitions.
+An event can have an argument.
+A state machine can also have named state maps, push transitions, pop transitions and automatic transitions.
 
-The argument is sent as follows:
+Send the argument with the event:
 
 [source,kotlin,numbered]
 ----
 fsm.sendEvent(EVENT1, arg)
 ----
 
-The argument is references in the action as follows:
+The action receives the argument:
 
 [source,kotlin,numbered]
 ----
@@ -109,9 +111,10 @@ onEvent(EVENT1) { arg ->
 }
 ----
 
-If we update the turnstile to include the value of the coin in the coin event we could implement the following:
-A named state where decisions regarding coins are made.
-We push to `coins` with COINS state and then the automatic states will be triggered if the guards are met.
+In this example, the COIN event has the value of the coin as its argument.
+A named state map, `coins`, makes the decisions about coins.
+A push transition goes to the `coins` state map and the COINS state.
+Then the state machine runs an automatic transition when its guard returns `true`.
 
 image::paying_turnstile_detail.png[Paying Turnstile]
 
@@ -158,13 +161,14 @@ image::paying_turnstile_detail.png[Paying Turnstile]
 
 |===
 
-When event is empty it is an automatic transition.
-We will further place COINS state in a named state map to illustrate how these can be composed to isolate or group behaviour.
+A row without an event is an automatic transition.
+The COINS state is in a named state map.
+This shows how you can use state maps to group behaviour or to keep it separate.
 
 ==== Context class
 
-The context class doesn't make decisions.
-The context class stores values and will update value in very specific ways.
+The context class does not make decisions.
+It stores values and changes them in specific ways.
 
 [source,kotlin,numbered]
 ----
@@ -178,14 +182,14 @@ include::../../commonTest/kotlin/org/infosmid/kfsm/example/PayingTurnstileTypes.
 include::../../commonTest/kotlin/org/infosmid/kfsm/example/PayingTurnstileTypes.kt[tag=states-events]
 ----
 
-We add a stateMap named `coins` with the state `COINS`.
-The statemap will be entered when there are coins.
-The automatic transitions will be triggered based on the guard expressions.
+The definition adds a state map that is named `coins`. The state map has the state `COINS`.
+The state machine enters the state map when the turnstile has coins.
+The guard expressions select the automatic transitions.
 
 ==== State machine definition packaged
 
-This includes an example of externalizing the state and creating an instance using a previously externalized state.
-The `externalState` method provides a list of states for the case where there are nested statemaps.
+This example shows how to externalize the state and how to create an instance from an externalized state.
+The `externalState` function returns a list of states. The list has one state for each state map on the stack.
 
 [source,kotlin,numbered]
 ----
@@ -245,13 +249,13 @@ entering:UNLOCKED ([10]) for Turnstile(locked=false,coins=0)
 
 === Secure Turnstile Example
 
-Unless you grew up in a city with a subway you may not be familiar with a turnstile accepting counts.
-You may be familiar with turnstile that responds to RFID or NFC cards.
+This turnstile reads RFID cards or NFC cards. It does not accept coins.
 
-We would add a complexity that allows for an override card to allow cards to pass even if they are invalid.
+The turnstile also has an override card.
+When the override is active, the turnstile lets any card pass, also an invalid card.
 
-We will use guard expressions to identify the override card and the validity of the card.
-When the override card is tapped a 2nd time it will cancel the override or lock the turnstile depending on the state.
+Guard expressions identify the override card and check if a card is valid.
+When a user taps the override card a second time, the turnstile cancels the override or locks, depending on the state.
 
 image::secure_turnstile_detail.png[Secure Turnstile FSM]
 
@@ -280,7 +284,7 @@ image::secure_turnstile_detail.png[Secure Turnstile FSM]
 
 |LOCKED
 |CARD(id)
-| not isValidVard(id)
+| not isValidCard(id)
 |
 | invalidCard()
 
@@ -300,8 +304,9 @@ image::secure_turnstile_detail.png[Secure Turnstile FSM]
 
 ==== Context class
 
-The context class doesn't make decisions about the behaviour of the turnstile.
-The context will provide information about the state of turnstile and validity of cards The context class stores values and will update value in very specific ways.
+The context class does not make decisions about the behaviour of the turnstile.
+It gives information about the state of the turnstile and about the validity of cards.
+It stores values and changes them in specific ways.
 
 [source,kotlin,numbered]
 ----
@@ -333,19 +338,19 @@ include::../../commonTest/kotlin/org/infosmid/kfsm/example/PayingTurnstileFsmTes
 
 image::packet-reader-fsm.png[]
 
-In real terms the above example combines multiple transitions into one for brevity.
-It is better when all control characters are one type of event with guard expressions.
-All events have a parameter which is the byte received and the event type is either BYTE, CTRL or ESC where:
+The diagram above combines some transitions to keep the diagram short.
+In the implementation, all control characters are one type of event, and guard expressions tell them apart.
+Each event has the received byte as its argument. The event type is BYTE, CTRL or ESC:
 
-* ESC is 0x1B
-* CTRL is for SOH,STX,ETX,EOT, ACK, NAK
-* BYTE all other characters
+* ESC is 0x1B.
+* CTRL is SOH, STX, ETX, EOT, ACK or NAK.
+* BYTE is any other character.
 
 image::packet_reader_detail.png[]
 
 ==== Context Classes
 
-The current checksum is a trivial implementation for the demonstration where the checksum has a character that matches the first character of each field.
+The checksum in this example is simple. The checksum has one character for each field. This character is the same as the first character of the field.
 
 [source,kotlin,numbered]
 ----
@@ -375,12 +380,12 @@ include::../../commonTest/kotlin/org/infosmid/kfsm/example/PacketReaderTests.kt[
 
 === Immutable Context Example
 
-In the case where you want a pure functional context that is immutable the following example will provide what you need:
+Use this example when you want an immutable context. Actions do not change the context. They return a new context.
 
 ==== Immutable Context
 
-The immutable context doesn't modify a variable.
-It returns a copy containing the new context
+The immutable context does not change a variable.
+It returns a copy that has the new values.
 
 [source,kotlin,numbered]
 ----
@@ -389,7 +394,7 @@ include::../../commonTest/kotlin/org/infosmid/kfsm/example/ImmutableLockFSM.kt[t
 
 ==== Definition
 
-The definition only exposes one method to handle an event given a context and return the new context.
+The definition has one function. The function applies an event to a context and returns the new context.
 
 [source,kotlin,numbered]
 ----
@@ -398,15 +403,15 @@ include::../../commonTest/kotlin/org/infosmid/kfsm/example/ImmutableLockFSM.kt[t
 
 ==== Usage
 
-We also added an overloaded plus operator.
-The provides for a way of signaling the application of event to context.
+The example also has an overloaded `plus` operator.
+Use it to apply an event to a context.
 
 [source,kotlin]
 ----
 include::../../commonTest/kotlin/org/infosmid/kfsm/example/ImmutableLockFSM.kt[tag=test]
 ----
 
-In the case where the argument to the state action will be something other than the context you can use a `Pair` and even when the state is needed separately:
+When the argument of the action is not the context, use a `Pair`. Use a `Pair` also when you need the state separately:
 
 [source,kotlin]
 ----
@@ -414,8 +419,8 @@ In the case where the argument to the state action will be something other than 
     val (state, newTurnStile) = locked + (COIN to 10)
 ----
 
-This assumes the argument is defined as type `Int` and the return as `Pair<LockStates,ImmutablePayingTurnstile>`
-The `handleEventMethod` will be:
+In this example, the argument type is `Int`. The return type is `Pair<LockStates, ImmutablePayingTurnstile>`.
+The `handleEvent` function is:
 
 [source,kotlin]
 ----
@@ -428,13 +433,14 @@ The `handleEventMethod` will be:
 
 === Secure Turnstile with Timeout Example
 
-We updated the Secure Turnstile with a timeout condition.
+This example adds a timeout transition to the Secure Turnstile.
+When the turnstile is UNLOCKED for 500 ms, it locks.
 
 image::timeout_turnstile_detail.png[Timeout Secure Turnstile FSM]
 
 ==== State Table
 
-=== TimerSecureTurnstileFSM State Map
+===== TimerSecureTurnstileFSM State Map
 
 |===
 | Start | Event[Guard] | Target | Action
@@ -521,8 +527,9 @@ lock()
 
 ==== Context class
 
-The context class doesn't make decisions about the behaviour of the turnstile.
-The context will provide information about the state of turnstile and validity of cards The context class stores values and will update value in very specific ways.
+The context class does not make decisions about the behaviour of the turnstile.
+It gives information about the state of the turnstile and about the validity of cards.
+It stores values and changes them in specific ways.
 
 [source,kotlin,numbered]
 ----
@@ -552,11 +559,12 @@ include::../../jvmTest/kotlin/org/infosmid/kfsm/example/TimeoutSecureTurnstileTe
 
 === Further thoughts
 
-The escape handling from the packet reader could be a separate statemap.
-The current implementation has a problem in that the value should be added to different buffer.
-It may be worthwhile to have a mechanism for providing a different substate context to take care of this kind of situation.
-An interface/class exposed to the substate instead of the full context.
-In this example `Block` will be exposed to the stateMap.
-The stateMap can then pop after adding the byte.
-In the case of an invalid character the statemap will still transition to the end state.
+The escape handling of the packet reader can be a separate state map.
+The current implementation has a problem: the escaped byte must go into a different buffer.
+
+A state map could receive a different context from the main context.
+This context would be an interface or a class that shows only a part of the full context.
+In this example, the state map would receive `Block`.
+The state map adds the byte and then runs a pop transition.
+If the character is not valid, the state map still goes to the end state.
 

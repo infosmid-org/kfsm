@@ -18,22 +18,25 @@ package org.infosmid.kfsm
 import org.infosmid.dbc.precondition
 
 /**
- * The build will be created to assist with create the top level or named state maps.
- * All transitions are assigned to a state map.
+ * The builder of one state map. The state map is the top-level state map or a named state map.
+ * The builder records all the transitions and actions of the state map. `toMap()` creates the immutable definition.
  * @author Corneil du Plessis
  * @soundtrack Wolfgang Amadeus Mozart
+ * @param validStates The set of states that the state map allows.
+ * @param name The name of the state map. The name of the top-level state map is `null`.
+ * @param parentBuilder The builder of the state machine that owns this state map.
  */
 class StateMapBuilder<S, E, C, A, R>(
     /**
-     * The set of states the state map supports
+     * The set of states that the state map allows.
      */
     val validStates: Set<S>,
     /**
-     * The name of the statemap.
+     * The name of the state map. The name of the top-level state map is `null`.
      */
     val name: String? = null,
     /**
-     * The parent state machine builder
+     * The builder of the state machine that owns this state map.
      */
     val parentBuilder: StateMachineBuilder<S, E, C, A, R>
 ) {
@@ -49,22 +52,23 @@ class StateMapBuilder<S, E, C, A, R>(
     private val invariants: MutableSet<Pair<String, Condition<C>>> = mutableSetOf()
 
     /**
-     * This function defines an invariant condition that will hold true before and after all transitions.
-     * @param message The message added to exception
-     * @param condition A boolean expression applied to the context
+     * Declares an invariant. The condition must be `true` before and after every transition.
+     * @param message The message of the `InvariantException` that the state machine throws when the condition is `false`.
+     * @param condition A boolean expression that has the context as `this`.
      */
     fun invariant(message: String, condition: Condition<C>) {
         invariants.add(Pair(message, condition))
     }
 
     /**
-     * This function defines a transition from the currentState equal to startState to the targetState when event is
-     * received and the guard expression is met. The action is executed after any exit action and before entry actions.
-     * @param startState The transition will be considered when currentState matches stateState
-     * @param event The event will trigger the consideration of this transition
-     * @param targetState The transition will change currentState to targetState after executing the option action
-     * @param guard The guard expression will have to be met to consider the transition
-     * @param action The optional action will be executed when the transition occurs.
+     * Declares an external transition with a guard.
+     * The transition occurs when the current state is `startState`, the state machine receives the event and the guard returns `true`.
+     * The state machine runs the action after the exit action and before the entry action.
+     * @param startState The state where the transition starts.
+     * @param event The event that triggers the transition.
+     * @param targetState The state after the transition.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun transition(
         startState: S,
@@ -73,8 +77,8 @@ class StateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>,
         action: SyncStateAction<C, A, R>?
     ) {
-        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(parentBuilder.validEvents.contains(event)) { "Event $event is not in the valid events of the state machine: ${parentBuilder.validEvents}" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val key = Pair(startState, event)
         val transitionRule = transitionRules[key]
         val transition = SyncGuardedTransition<S, E, C, A, R>(
@@ -97,16 +101,16 @@ class StateMapBuilder<S, E, C, A, R>(
     }
 
     /**
-     * This function defines a transition that doesn't change the state also know as an internal transition.
-     * The transition will only occur if the guard expression is met.
-     * @param startState The transition will be considered when currentState matches stateState
-     * @param event The event will trigger the consideration of this transition
-     * @param guard The guard expression will have to be met to consider the transition
-     * @param action The optional action will be executed when the transition occurs.
+     * Declares an internal transition with a guard. The state does not change.
+     * The transition occurs only when the guard returns `true`.
+     * @param startState The state where the transition starts.
+     * @param event The event that triggers the transition.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun transition(startState: S, event: E, guard: StateGuard<C, A>, action: SyncStateAction<C, A, R>?) {
-        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(parentBuilder.validEvents.contains(event)) { "Event $event is not in the valid events of the state machine: ${parentBuilder.validEvents}" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val key = Pair(startState, event)
         val transitionRule = transitionRules[key]
         val transition = SyncGuardedTransition<S, E, C, A, R>(
@@ -129,16 +133,17 @@ class StateMapBuilder<S, E, C, A, R>(
     }
 
     /**
-     * This function defines a transition that will be triggered when the currentState is the same as the startState and on is received. The FSM currentState will change to the targetState after the action was executed.
-     * Entry and Exit actions will also be performed.
-     * @param startState transition applies when FSM currentState is the same as stateState.
-     * @param event transition applies when on received.
-     * @param targetState FSM will transition to targetState.
-     * @param action The actions will be invoked
+     * Declares an external transition.
+     * The transition occurs when the current state is `startState` and the state machine receives the event.
+     * The state machine runs the exit action, the transition action and the entry action. Then the state changes to the target state.
+     * @param startState The state where the transition starts.
+     * @param event The event that triggers the transition.
+     * @param targetState The state after the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun transition(startState: S, event: E, targetState: S, action: SyncStateAction<C, A, R>?) {
-        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(parentBuilder.validEvents.contains(event)) { "Event $event is not in the valid events of the state machine: ${parentBuilder.validEvents}" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val key = Pair(startState, event)
         val transitionRule = transitionRules[key]
         val transition = SimpleSyncTransition<S, E, C, A, R>(
@@ -153,20 +158,21 @@ class StateMapBuilder<S, E, C, A, R>(
         if (transitionRule == null) {
             transitionRules[key] = SyncTransitionRules<S, E, C, A, R>(transition = transition)
         } else {
-            precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on $event already defined" }
+            precondition(transitionRule.transition == null) { "State $startState already has a transition without a guard for event $event" }
             transitionRule.transition = transition
         }
     }
 
     /**
-     * This function defines a transition that doesn't change the state of the state machine when the currentState is startState and the on is received and after the action was performed. No entry or exit actions performed.
-     * @param startState transition applies when when FSM currentState is the same as stateState
-     * @param event transition applies when on received
-     * @param action actions will be invoked
+     * Declares an internal transition. The state does not change.
+     * The state machine does not run the exit action or the entry action.
+     * @param startState The state where the transition starts.
+     * @param event The event that triggers the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun transition(startState: S, event: E, action: SyncStateAction<C, A, R>?) {
-        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(parentBuilder.validEvents.contains(event)) { "Event $event is not in the valid events of the state machine: ${parentBuilder.validEvents}" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val key = Pair(startState, event)
         val transitionRule = transitionRules[key]
         val transition = SimpleSyncTransition<S, E, C, A, R>(
@@ -181,21 +187,23 @@ class StateMapBuilder<S, E, C, A, R>(
         if (transitionRule == null) {
             transitionRules[key] = SyncTransitionRules<S, E, C, A, R>(transition = transition)
         } else {
-            precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on $event already defined" }
+            precondition(transitionRule.transition == null) { "State $startState already has a transition without a guard for event $event" }
             transitionRule.transition = transition
         }
     }
 
     /**
-     * Creates a pop transition that applies to the startState on a given event. This will result in a new push transition
-     * @param startState The pop transition will apply to the specific state.
-     * @param event The event that will trigger the transition
-     * @param targetState The state after the transition
-     * @param targetMap The map after the transition
-     * @param action The optional action that will be invoked.
+     * Declares a pop transition.
+     * The current state map is removed from the stack. The previous state map becomes the current state map.
+     * When the transition has a target map, a push transition follows.
+     * @param startState The state where the transition starts.
+     * @param event The event that triggers the transition.
+     * @param targetState The state after the transition. It can be `null`.
+     * @param targetMap The name of the state map for the push transition that follows. It can be `null`.
+     * @param action An optional lambda to run during the transition.
      */
     fun popTransition(startState: S, event: E, targetState: S?, targetMap: String?, action: SyncStateAction<C, A, R>?) {
-        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
+        precondition(parentBuilder.validEvents.contains(event)) { "Event $event is not in the valid events of the state machine: ${parentBuilder.validEvents}" }
         val key = Pair(startState, event)
         val transitionRule = transitionRules[key]
         val transition = SimpleSyncTransition<S, E, C, A, R>(
@@ -210,19 +218,20 @@ class StateMapBuilder<S, E, C, A, R>(
         if (transitionRule == null) {
             transitionRules[key] = SyncTransitionRules<S, E, C, A, R>(transition = transition)
         } else {
-            precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on $event already defined" }
+            precondition(transitionRule.transition == null) { "State $startState already has a transition without a guard for event $event" }
             transitionRule.transition = transition
         }
     }
 
     /**
-     * Creates a pop transition that applies to the startState on a given event. This will result in a new push transition if the guard expression is true
-     * @param startState The pop transition will apply to the specific state.
-     * @param event The event that will trigger the transition
-     * @param targetState The state after the transition
-     * @param targetMap The map after the transition
-     * @param guard The expression must evaludate to true before the transition will be trigger.
-     * @param action The optional action that will be invoked.
+     * Declares a pop transition with a guard.
+     * The current state map is removed from the stack. When the transition has a target map, a push transition follows.
+     * @param startState The state where the transition starts.
+     * @param event The event that triggers the transition.
+     * @param targetState The state after the transition. It can be `null`.
+     * @param targetMap The name of the state map for the push transition that follows. It can be `null`.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun popTransition(
         startState: S,
@@ -232,8 +241,8 @@ class StateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>,
         action: SyncStateAction<C, A, R>?
     ) {
-        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(parentBuilder.validEvents.contains(event)) { "Event $event is not in the valid events of the state machine: ${parentBuilder.validEvents}" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val key = Pair(startState, event)
         val transitionRule = transitionRules[key]
         val transition = SyncGuardedTransition<S, E, C, A, R>(
@@ -256,17 +265,18 @@ class StateMapBuilder<S, E, C, A, R>(
     }
 
     /**
-     * Creates a push transition for a startState and triggered by event. The transition will change to targetMap and targetState.
-     * @param startState The transition will apply to the specific state.
-     * @param event The event that will trigger the transition
-     * @param targetState The state after the transition
-     * @param targetMap The map after the transition
-     * @param action The optional action will be invoked
+     * Declares a push transition.
+     * The current state map goes on the stack. The target map becomes the current state map and the state changes to the target state.
+     * @param startState The state where the transition starts.
+     * @param event The event that triggers the transition.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param action An optional lambda to run during the transition.
      */
     fun pushTransition(startState: S, event: E, targetMap: String, targetState: S, action: SyncStateAction<C, A, R>?) {
-        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
-        precondition(parentBuilder.namedStateMaps.containsKey(targetMap)) { "$targetMap map not found in ${parentBuilder.namedStateMaps.keys}" }
+        precondition(parentBuilder.validEvents.contains(event)) { "Event $event is not in the valid events of the state machine: ${parentBuilder.validEvents}" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
+        precondition(parentBuilder.namedStateMaps.containsKey(targetMap)) { "State map $targetMap does not exist. Defined state maps: ${parentBuilder.namedStateMaps.keys}" }
         val key = Pair(startState, event)
         val transitionRule = transitionRules[key]
         val transition = SimpleSyncTransition<S, E, C, A, R>(
@@ -281,19 +291,21 @@ class StateMapBuilder<S, E, C, A, R>(
         if (transitionRule == null) {
             transitionRules[key] = SyncTransitionRules<S, E, C, A, R>(mutableListOf(), transition)
         } else {
-            precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on $event already defined" }
+            precondition(transitionRule.transition == null) { "State $startState already has a transition without a guard for event $event" }
             transitionRule.transition = transition
         }
     }
 
     /**
-     * Creates a push transition for a startState and triggered by event and guard expression being `true`. The transition will change to targetMap and targetState.
-     * @param startState The transition will apply to the specific state.
-     * @param event The event that will trigger the transition
-     * @param targetState The state after the transition
-     * @param targetMap The map after the transition
-     * @param guard The expression must be true to trigger the transition
-     * @param action The optional action will be invoked
+     * Declares a push transition with a guard.
+     * The state machine uses the transition only when the guard returns `true`.
+     * The current state map goes on the stack. The target map becomes the current state map and the state changes to the target state.
+     * @param startState The state where the transition starts.
+     * @param event The event that triggers the transition.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun pushTransition(
         startState: S,
@@ -303,9 +315,9 @@ class StateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>,
         action: SyncStateAction<C, A, R>?
     ) {
-        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
-        precondition(parentBuilder.namedStateMaps.containsKey(targetMap)) { "$targetMap map not found in ${parentBuilder.namedStateMaps.keys}" }
+        precondition(parentBuilder.validEvents.contains(event)) { "Event $event is not in the valid events of the state machine: ${parentBuilder.validEvents}" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
+        precondition(parentBuilder.namedStateMaps.containsKey(targetMap)) { "State map $targetMap does not exist. Defined state maps: ${parentBuilder.namedStateMaps.keys}" }
         val key = Pair(startState, event)
         val transitionRule = transitionRules[key]
         val transition =
@@ -329,14 +341,15 @@ class StateMapBuilder<S, E, C, A, R>(
     }
 
     /**
-     * Creates an automatic transition when currentState is the startState. The transition will change to targetState.
-     * @param startState The transition will apply to the specific state.
-     * @param targetState The state after the transition
-     * @param action The optional action will be invoked
+     * Declares an automatic transition. It has no event.
+     * The state machine runs it after a transition that ends in `startState`.
+     * @param startState The state where the transition starts.
+     * @param targetState The state after the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun automatic(startState: S, targetState: S, action: SyncStateAction<C, A, R>?) {
-        precondition(validStates.contains(targetState)) { "$targetState must be one of $validStates" }
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(targetState)) { "State $targetState is not in the valid states of this state map: $validStates" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val transitionRule = automaticTransitions[startState]
         val transition = SimpleSyncTransition<S, E, C, A, R>(
                 startState,
@@ -350,20 +363,22 @@ class StateMapBuilder<S, E, C, A, R>(
         if (transitionRule == null) {
             automaticTransitions[startState] = SyncTransitionRules<S, E, C, A, R>(mutableListOf(), transition)
         } else {
-            precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on already defined" }
+            precondition(transitionRule.transition == null) { "State $startState already has a transition without a guard" }
             transitionRule.transition = transition
         }
     }
 
     /**
-     * @param startState The transition will apply to the specific state.
-     * @param targetState The state after the transition
-     * @param guard The expression must be true to trigger the transition
-     * @param action The optional action will be invoked
+     * Declares an automatic transition with a guard. It has no event.
+     * The state machine runs it after a transition that ends in `startState`, only when the guard returns `true`.
+     * @param startState The state where the transition starts.
+     * @param targetState The state after the transition.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun automatic(startState: S, targetState: S, guard: StateGuard<C, A>, action: SyncStateAction<C, A, R>?) {
-        precondition(validStates.contains(targetState)) { "$targetState must be one of $validStates" }
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(targetState)) { "State $targetState is not in the valid states of this state map: $validStates" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val transitionRule = automaticTransitions[startState]
         val transition =
             SyncGuardedTransition<S, E, C, A, R>(
@@ -384,13 +399,14 @@ class StateMapBuilder<S, E, C, A, R>(
     }
 
     /**
-     * Creates a pop transition that will pop the last statemap and then change to the targetState.
-     * @param startState The transition will apply to the specific state.
-     * @param targetState The state after the transition
-     * @param action The optional action will be invoked
+     * Declares an automatic pop transition with a target state.
+     * The current state map is removed from the stack. The state of the previous state map changes to the target state.
+     * @param startState The state where the transition starts.
+     * @param targetState The state of the previous state map after the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun automaticPop(startState: S, targetState: S, action: SyncStateAction<C, A, R>?) {
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val transitionRule = automaticTransitions[startState]
         val transition = SimpleSyncTransition<S, E, C, A, R>(
             startState, null, targetState, null, true, TransitionType.POP, action
@@ -398,18 +414,19 @@ class StateMapBuilder<S, E, C, A, R>(
         if (transitionRule == null) {
             automaticTransitions[startState] = SyncTransitionRules<S, E, C, A, R>(mutableListOf(), transition)
         } else {
-            precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on already defined" }
+            precondition(transitionRule.transition == null) { "State $startState already has a transition without a guard" }
             transitionRule.transition = transition
         }
     }
 
     /**
-     * Creates a pop transition that will return to orginal state that was pushed after executing the action.
-     * @param startState The transition will apply to the specific state.
-     * @param action The optional action will be invoked
+     * Declares an automatic pop transition without a target state.
+     * The current state map is removed from the stack. The previous state map becomes current and keeps its state.
+     * @param startState The state where the transition starts.
+     * @param action An optional lambda to run during the transition.
      */
     fun automaticPop(startState: S, action: SyncStateAction<C, A, R>?) {
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val transitionRule = automaticTransitions[startState]
         val transition = SimpleSyncTransition<S, E, C, A, R>(
             startState, null, null, null, true, TransitionType.POP, action
@@ -417,20 +434,20 @@ class StateMapBuilder<S, E, C, A, R>(
         if (transitionRule == null) {
             automaticTransitions[startState] = SyncTransitionRules<S, E, C, A, R>(transition = transition)
         } else {
-            precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on already defined" }
+            precondition(transitionRule.transition == null) { "State $startState already has a transition without a guard" }
             transitionRule.transition = transition
         }
     }
 
     /**
-     * Creates a pop transition that will apply when currentState is startState. The transition will change to targetMap/targetState
-     * @param startState The transition will apply to the specific state.
-     * @param targetState The state after the transition
-     * @param targetMap The map after the transition
-     * @param action The optional action will be invoked
+     * Declares an automatic pop transition that is followed by a push transition.
+     * @param startState The state where the transition starts.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param action An optional lambda to run during the transition.
      */
     fun automaticPop(startState: S, targetMap: String, targetState: S, action: SyncStateAction<C, A, R>?) {
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val transitionRule = automaticTransitions[startState]
         val transition =
             SimpleSyncTransition<S, E, C, A, R>(
@@ -445,20 +462,20 @@ class StateMapBuilder<S, E, C, A, R>(
         if (transitionRule == null) {
             automaticTransitions[startState] = SyncTransitionRules<S, E, C, A, R>(transition = transition)
         } else {
-            precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on already defined" }
+            precondition(transitionRule.transition == null) { "State $startState already has a transition without a guard" }
             transitionRule.transition = transition
         }
     }
 
     /**
-     * Creates a pop transition that will apply when currentState is startState and guard is true. The transition will change to targetMap/targetState
-     * @param startState The transition will apply to the specific state.
-     * @param targetState The state after the transition
-     * @param guard The expression must be true to trigger the transition
-     * @param action The optional action will be invoked
+     * Declares an automatic pop transition with a target state and a guard.
+     * @param startState The state where the transition starts.
+     * @param targetState The state of the previous state map after the transition.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun automaticPop(startState: S, targetState: S, guard: StateGuard<C, A>, action: SyncStateAction<C, A, R>?) {
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val transitionRule = automaticTransitions[startState]
         val transition =
             SyncGuardedTransition<S, E, C, A, R>(
@@ -479,13 +496,13 @@ class StateMapBuilder<S, E, C, A, R>(
     }
 
     /**
-     * Creates an automatic pop transition with will apply when currentState is startState and the guard expression is true.
-     * @param startState The transition will apply to the specific state.
-     * @param guard The expression must be true to trigger the transition
-     * @param action The optional action will be invoked
+     * Declares an automatic pop transition without a target state and with a guard.
+     * @param startState The state where the transition starts.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun automaticPop(startState: S, guard: StateGuard<C, A>, action: SyncStateAction<C, A, R>?) {
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val transitionRule = automaticTransitions[startState]
         val transition =
             SyncGuardedTransition<S, E, C, A, R>(startState, null, null, null, true, TransitionType.POP, guard, action)
@@ -497,12 +514,12 @@ class StateMapBuilder<S, E, C, A, R>(
     }
 
     /**
-     * Create an automatic pop transition when currentState is startState and when guard is true. The transition will target targetMap and targetState
-     * @param startState The transition will apply to the specific state.
-     * @param targetState The state after the transition
-     * @param targetMap The map after the transition
-     * @param guard The expression must be true to trigger the transition
-     * @param action The optional action will be invoked
+     * Declares an automatic pop transition that is followed by a push transition, with a guard.
+     * @param startState The state where the transition starts.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun automaticPop(
         startState: S,
@@ -511,7 +528,7 @@ class StateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>,
         action: SyncStateAction<C, A, R>?
     ) {
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val transitionRule = automaticTransitions[startState]
         val transition = SyncGuardedTransition<S, E, C, A, R>(
                 startState,
@@ -531,14 +548,14 @@ class StateMapBuilder<S, E, C, A, R>(
     }
 
     /**
-     * Creates an automatic push transition when current state is startState for a targetMap and targetState.
-     * @param startState The transition will apply to the specific state.
-     * @param targetMap The map after the transition
-     * @param targetState The state after the transition
-     * @param action The optional action will be invoked
+     * Declares an automatic push transition.
+     * @param startState The state where the transition starts.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param action An optional lambda to run during the transition.
      */
     fun automaticPush(startState: S, targetMap: String, targetState: S, action: SyncStateAction<C, A, R>?) {
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val transitionRule = automaticTransitions[startState]
         val transition =
             SimpleSyncTransition<S, E, C, A, R>(
@@ -553,18 +570,18 @@ class StateMapBuilder<S, E, C, A, R>(
         if (transitionRule == null) {
             automaticTransitions[startState] = SyncTransitionRules<S, E, C, A, R>(transition = transition)
         } else {
-            precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on already defined" }
+            precondition(transitionRule.transition == null) { "State $startState already has a transition without a guard" }
             transitionRule.transition = transition
         }
     }
 
     /**
-     * Creates an automatic push transition for startState. When the currentState is startState and guard is true the targetMap and targetState will become current after executing the optional action
-     * @param startState The transition will apply to the specific state.
-     * @param targetMap The map after the transition
-     * @param targetState The state after the transition
-     * @param guard The expression must be true to trigger the transition
-     * @param action The optional action will be invoked
+     * Declares an automatic push transition with a guard.
+     * @param startState The state where the transition starts.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun automaticPush(
         startState: S,
@@ -573,7 +590,7 @@ class StateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>,
         action: SyncStateAction<C, A, R>?
     ) {
-        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "State $startState is not in the valid states of this state map: $validStates" }
         val transitionRule = automaticTransitions[startState]
         val transition = SyncGuardedTransition<S, E, C, A, R>(
                 startState,
@@ -593,49 +610,54 @@ class StateMapBuilder<S, E, C, A, R>(
     }
 
     /**
-     * This function defines an action to be invoked when no action is found matching the current state and event.
-     * This will be an internal transition and will not cause a change in state or invoke entry or exit functions.
-     * @param action This action will be performed
+     * Declares the default action for the state map.
+     * The state machine runs it when no transition matches the current state and the event.
+     * It is an internal transition. The state does not change, and the state machine does not run the exit action or the entry action.
+     * @param action The lambda to run.
      */
     fun defaultAction(action: DefaultStateAction<C, S, E, A, R>) {
         globalDefault = action
     }
 
     /**
-     * This function defines an action to be invoked when no entry action is defined for the current state.
-     * @param action This action will be invoked
+     * Declares the default entry action.
+     * The state machine runs it for an external transition, after the entry action of the target state.
+     * @param action The lambda to run.
      */
     fun defaultEntry(action: DefaultEntryExitAction<C, S, A>) {
         defaultEntryAction = action
     }
 
     /**
-     * This function defines an action to be invoked when no exit action is defined for the current state.
-     * @param action This action will be invoked
+     * Declares the default exit action.
+     * The state machine runs it for an external transition, after the exit action of the current state.
+     * @param action The lambda to run.
      */
     fun defaultExit(action: DefaultEntryExitAction<C, S, A>) {
         defaultExitAction = action
     }
 
     /**
-     * This function defines an action to be invoked when no transitions are found matching the given state and on.
-     * @param currentState The provided state
-     * @param action This action will be invoked
+     * Declares the default action for one state.
+     * The state machine runs it when no transition matches the state and the event.
+     * @param currentState The state that the action applies to.
+     * @param action The lambda to run.
      */
     fun default(currentState: S, action: DefaultStateAction<C, S, E, A, R>) {
-        precondition(validStates.contains(currentState)) { "$currentState must be one of $validStates" }
-        precondition(defaultActions[currentState] == null) { "Default defaultAction already defined for $currentState" }
+        precondition(validStates.contains(currentState)) { "State $currentState is not in the valid states of this state map: $validStates" }
+        precondition(defaultActions[currentState] == null) { "State $currentState already has a default action" }
         defaultActions[currentState] = action
     }
 
     /**
-     * This function defines an action to be invoked when no transitions match the event. The currentState will be change to second parameter of the Pair.
-     * @param event The Pair holds the event and targetState and can be written as `event to state`
-     * @param action The option action will be executed when this default transition occurs.
+     * Declares a default external transition for an event.
+     * The state machine uses it when no transition matches the event. The state changes to the target state.
+     * @param event A pair of the event and the target state. Write it as `event to state`.
+     * @param action An optional lambda to run during the transition.
      */
     fun default(event: EventState<E, S>, action: SyncStateAction<C, A, R>?) {
-        precondition(parentBuilder.validEvents.contains(event.first)) { "$event must be one of ${parentBuilder.validEvents}" }
-        precondition(defaultTransitions[event.first] == null) { "Default transition for ${event.first} already defined" }
+        precondition(parentBuilder.validEvents.contains(event.first)) { "Event $event is not in the valid events of the state machine: ${parentBuilder.validEvents}" }
+        precondition(defaultTransitions[event.first] == null) { "Event ${event.first} already has a default transition" }
         defaultTransitions[event.first] = DefaultSyncTransition<S, E, C, A, R>(
             event.first,
             event.second,
@@ -647,13 +669,14 @@ class StateMapBuilder<S, E, C, A, R>(
     }
 
     /**
-     * This function defines an action to be invoked when no transitions are found for given event.
-     * @param event The event to match this transition.
-     * @param action The option action will be executed when this default transition occurs.
+     * Declares a default internal transition for an event.
+     * The state machine uses it when no transition matches the event. The state does not change.
+     * @param event The event that triggers the transition.
+     * @param action An optional lambda to run during the transition.
      */
     fun default(event: E, action: SyncStateAction<C, A, R>?) {
-        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
-        precondition(defaultTransitions[event] == null) { "Default transition for $event already defined" }
+        precondition(parentBuilder.validEvents.contains(event)) { "Event $event is not in the valid events of the state machine: ${parentBuilder.validEvents}" }
+        precondition(defaultTransitions[event] == null) { "Event $event already has a default transition" }
         defaultTransitions[event] = DefaultSyncTransition<S, E, C, A, R>(
             event,
             null,
@@ -665,29 +688,32 @@ class StateMapBuilder<S, E, C, A, R>(
     }
 
     /**
-     * This function defines an action to be invoked when the FSM changes to the provided state
-     * @param currentState The provided state
-     * @param action This action will be invoked
+     * Declares the entry action for a state.
+     * The state machine runs it for an external transition that has this state as the target state.
+     * @param currentState The state that the action applies to.
+     * @param action The lambda to run.
      */
     fun entry(currentState: S, action: DefaultEntryExitAction<C, S, A>) {
-        precondition(validStates.contains(currentState)) { "$currentState must be one of $validStates" }
-        precondition(entryActions[currentState] == null) { "Entry defaultAction already defined for $currentState" }
+        precondition(validStates.contains(currentState)) { "State $currentState is not in the valid states of this state map: $validStates" }
+        precondition(entryActions[currentState] == null) { "State $currentState already has an entry action" }
         entryActions[currentState] = action
     }
 
     /**
-     * This function defines an action to be invoke when the FSM changes from the provided state
-     * @param currentState The provided state
-     * @param action This action will be invoked
+     * Declares the exit action for a state.
+     * The state machine runs it for an external transition that starts in this state.
+     * @param currentState The state that the action applies to.
+     * @param action The lambda to run.
      */
     fun exit(currentState: S, action: DefaultEntryExitAction<C, S, A>) {
-        precondition(validStates.contains(currentState)) { "$currentState must be one of $validStates" }
-        precondition(exitActions[currentState] == null) { "Exit defaultAction already defined for $currentState" }
+        precondition(validStates.contains(currentState)) { "State $currentState is not in the valid states of this state map: $validStates" }
+        precondition(exitActions[currentState] == null) { "State $currentState already has an exit action" }
         exitActions[currentState] = action
     }
 
     /**
-     * Creates a `StateMapDefinition` from the data in this builder
+     * Creates the immutable `StateMapDefinition` from the declarations in this builder.
+     * @param afterStateChangeAction The action that the state machine runs after the state has changed. It can be `null`.
      */
     fun toMap(afterStateChangeAction: StateChangeAction<C, S>?): StateMapDefinition<S, E, C, A, R> = StateMapDefinition(
         this.name,

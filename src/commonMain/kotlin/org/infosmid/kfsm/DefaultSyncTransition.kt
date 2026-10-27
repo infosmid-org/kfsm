@@ -19,10 +19,13 @@ package org.infosmid.kfsm
  * @author Corneil du Plessis
  * @soundtrack Wolfgang Amadeus Mozart
  * @suppress
- * Represents a DefaultTransition
- * @param event The event identifies the transition
- * @param targetState when optional represents an internal transition
- * @param action optional lambda will be invoked when transition occurs.
+ * A transition for an event that no other transition handles in the state map.
+ * @param event The event that identifies the transition.
+ * @param targetState The state after the transition. When it is `null`, the transition is internal.
+ * @param targetMap The name of the state map for a push transition or a pop transition.
+ * @param automatic `true` if the transition has no event.
+ * @param type The kind of transition.
+ * @param action An optional lambda. The state machine runs it when the transition occurs.
  */
 class DefaultSyncTransition<S, E, C, A, R>(
     internal val event: E,

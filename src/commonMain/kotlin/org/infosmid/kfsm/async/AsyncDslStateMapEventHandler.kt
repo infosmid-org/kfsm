@@ -21,38 +21,47 @@ import org.infosmid.kfsm.DefaultEntryExitAction
 import org.infosmid.kfsm.EventState
 import org.infosmid.kfsm.StateGuard
 
+/**
+ * The DSL receiver inside a `whenState` block of an asynchronous state machine.
+ * It declares the transitions and actions for one state. The actions are `suspend` functions.
+ */
 class AsyncDslStateMapEventHandler<S, E, C, A, R>(
     private val currentState: S,
     private val fsm: AsyncStateMapBuilder<S, E, C, A, R>
 ) {
     /**
-     * Defines a default action when no other transition are matched
-     * @param action The action will be performed when no matching state can be found
+     * Declares the default action for the state.
+     * The state machine runs it when no other transition matches the event.
+     * @param action The lambda to run.
      */
     fun default(action: DefaultAsyncStateAction<C, S, E, A, R>) {
         fsm.default(currentState, action)
     }
 
     /**
-     * Defines an action to be performed before transition causes a change in state
-     * @param action The action will be performed when entering a new state
+     * Declares the entry action for the state.
+     * The state machine runs it for an external transition that has this state as the target state.
+     * The state has not changed when the action runs.
+     * @param action The lambda to run.
      */
     fun onEntry(action: DefaultEntryExitAction<C, S, A>) {
         fsm.entry(currentState, action)
     }
 
     /**
-     * Defines an action to be performed after a transition has changed the state
-     * @param action The action will be invoked when exiting a state.
+     * Declares the exit action for the state.
+     * The state machine runs it for an external transition that starts in this state.
+     * The state has not changed when the action runs.
+     * @param action The lambda to run.
      */
     fun onExit(action: DefaultEntryExitAction<C, S, A>) {
         fsm.exit(currentState, action)
     }
 
     /**
-     * Defines a transition when the state is the currentState and the on is received. The state is changed to the targetState.
-     * @param event A Pair with the first being the on and the second being the targetState.
-     * @param action The action will be performed
+     * Declares an internal transition. The state does not change.
+     * @param event A pair of the event and the target state. Write it as `EVENT to STATE`.
+     * @param action An optional `suspend` lambda to run during the transition.
      */
     fun onEvent(
         event: EventState<E, S>,
@@ -63,10 +72,11 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
     }
 
     /**
-     * Defines a guarded transition. Where the transition will only be used if the guarded expression is met
-     * @param event The event and targetState the defines the transition
-     * @param guard The guard expression must be met before the transition is considered.
-     * @param action The optional action that may be executed
+     * Declares an internal transition with a guard. The state does not change.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param event A pair of the event and the target state. Write it as `EVENT to STATE`.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
      */
     fun onEvent(
         event: EventState<E, S>,
@@ -78,9 +88,9 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
     }
 
     /**
-     * Defines a transition where an on causes an action but doesn't change the state.
-     * @param event The event and targetState the defines the transition
-     * @param action The optional action that may be executed
+     * Declares an internal transition. The state does not change.
+     * @param event The event that triggers the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
      */
     fun onEvent(event: E, action: AsyncStateAction<C, A, R>?): AsyncDslStateMapEventHandler<S, E, C, A, R> {
         fsm.transition(currentState, event, null, null, action)
@@ -88,11 +98,11 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
     }
 
     /**
-     * Defines a guarded transition where an on causes an action but doesn't change the state and will only be used
-     * if the guard expression is met. This will be an internal transition with no change in state.
-     * @param event The event that will trigger the transition.
-     * @param guard The guard expression must be met before the transition is considered.
-     * @param action The optional action that may be executed
+     * Declares an internal transition with a guard. The state does not change.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param event The event that triggers the transition.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
      */
     fun onEvent(
         event: E,
@@ -104,11 +114,12 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
     }
 
     /**
-     * Defines a push transition on event for a targetMap and targetState.
-     * @param event The event that will trigger the transition.
-     * @param targetMap The named stateMap that will be targeted.
-     * @param targetState The new state within the targetMap
-     * @param action The optional action that may be executed.
+     * Declares a push transition.
+     * The current state map goes on the stack. The target map becomes the current state map and the state changes to the target state.
+     * @param event The event that triggers the transition.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param action An optional `suspend` lambda to run during the transition.
      */
     fun onEventPush(
         event: E,
@@ -121,11 +132,14 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
     }
 
     /**
-     * Defines a push transition on event for a targetMap and targetState when the guard evaluates to `true`
-     * @param event The event that will trigger the transition.
-     * @param targetMap The named stateMap that will be targeted.
-     * @param targetState The new state within the targetMap
-     * @param action The optional action that may be executed.
+     * Declares a push transition with a guard.
+     * The current state map goes on the stack. The target map becomes the current state map and the state changes to the target state.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param event The event that triggers the transition.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
      */
     fun onEventPush(
         event: E,
@@ -138,16 +152,36 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
         return this
     }
 
+    /**
+     * Declares a pop transition without a target state.
+     * The state machine removes the current state map from the stack. The previous state map becomes the current state map.
+     * @param event The event that triggers the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun onEventPop(event: E, action: AsyncStateAction<C, A, R>?): AsyncDslStateMapEventHandler<S, E, C, A, R> {
         fsm.popTransition(currentState, event, null, null, null, action)
         return this
     }
 
+    /**
+     * Declares a pop transition with a target state.
+     * The state machine removes the current state map from the stack. The previous state map becomes the current state map.
+     * @param event A pair of the event and the target state. Write it as `EVENT to STATE`.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun onEventPop(event: Pair<E, S>, action: AsyncStateAction<C, A, R>?): AsyncDslStateMapEventHandler<S, E, C, A, R> {
         fsm.popTransition(currentState, event.first, event.second, null, null, action)
         return this
     }
 
+    /**
+     * Declares a pop transition with a guard and a target state.
+     * The state machine removes the current state map from the stack. The previous state map becomes the current state map.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param event A pair of the event and the target state. Write it as `EVENT to STATE`.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun onEventPop(
         event: Pair<E, S>,
         guard: StateGuard<C, A>,
@@ -157,6 +191,14 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
         return this
     }
 
+    /**
+     * Declares a pop transition that is followed by a push transition.
+     * The state machine removes the current state map from the stack. The previous state map becomes the current state map.
+     * @param event The event that triggers the transition.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun onEventPop(
         event: E,
         targetMap: String,
@@ -167,6 +209,14 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
         return this
     }
 
+    /**
+     * Declares a pop transition with a guard without a target state.
+     * The state machine removes the current state map from the stack. The previous state map becomes the current state map.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param event The event that triggers the transition.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun onEventPop(
         event: E,
         guard: StateGuard<C, A>,
@@ -176,6 +226,16 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
         return this
     }
 
+    /**
+     * Declares a pop transition that is followed by a push transition with a guard.
+     * The state machine removes the current state map from the stack. The previous state map becomes the current state map.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param event The event that triggers the transition.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun onEventPop(
         event: E,
         targetMap: String,
@@ -187,94 +247,279 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
         return this
     }
 
+    /**
+     * Declares an automatic transition. It has no event.
+     * The state machine runs it after a transition that ends in this state.
+     * @param targetState The state after the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun automatic(targetState: S, action: AsyncStateAction<C, A, R>?) {
         fsm.automatic(currentState, targetState, null, action)
     }
 
+    /**
+     * Declares an automatic transition with a guard. It has no event.
+     * The state machine runs it after a transition that ends in this state, only when the guard returns `true`.
+     * @param targetState The state after the transition.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun automatic(targetState: S, guard: StateGuard<C, A>, action: AsyncStateAction<C, A, R>?) {
         fsm.automatic(currentState, targetState, guard, action)
     }
 
+    /**
+     * Declares a timeout transition.
+     * The state machine starts a timer when it enters this state. When the timer expires, the transition occurs.
+     * The state machine cancels the timer when it leaves this state.
+     * @param targetState The state after the transition.
+     * @param timeout The time to wait in milliseconds.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeout(targetState: S, timeout: Long, action: AsyncStateAction<C, A, R>?) {
         fsm.timeout(currentState, targetState, { timeout }, null, action)
     }
 
+    /**
+     * Declares a timeout transition.
+     * The state machine starts a timer when it enters this state. When the timer expires, the transition occurs.
+     * The state machine cancels the timer when it leaves this state.
+     * @param targetState The state after the transition.
+     * @param timeout A lambda that has the context as `this` and returns the time to wait in milliseconds.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeout(targetState: S, timeout: C.() -> Long, action: AsyncStateAction<C, A, R>?) {
         fsm.timeout(currentState, targetState, timeout, null, action)
     }
 
+    /**
+     * Declares a timeout transition with a guard.
+     * The state machine starts a timer when it enters this state. When the timer expires, the transition occurs.
+     * The state machine cancels the timer when it leaves this state.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param targetState The state after the transition.
+     * @param timeout A lambda that has the context as `this` and returns the time to wait in milliseconds.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeout(targetState: S, timeout: C.() -> Long, guard: StateGuard<C, A>, action: AsyncStateAction<C, A, R>?) {
         fsm.timeout(currentState, targetState, timeout, guard, action)
     }
 
+    /**
+     * Declares a timeout transition with a guard.
+     * The state machine starts a timer when it enters this state. When the timer expires, the transition occurs.
+     * The state machine cancels the timer when it leaves this state.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param targetState The state after the transition.
+     * @param timeout The time to wait in milliseconds.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeout(targetState: S, timeout: Long, guard: StateGuard<C, A>, action: AsyncStateAction<C, A, R>?) {
         fsm.timeout(currentState, targetState, { timeout }, guard, action)
     }
 
+    /**
+     * Declares an automatic pop transition with a target state.
+     * The state machine runs it after a transition that ends in this state.
+     * @param targetState The state of the previous state map after the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun automaticPop(targetState: S, action: AsyncStateAction<C, A, R>?) {
         fsm.automaticPop(currentState, null, targetState, null, action)
     }
 
+    /**
+     * Declares an automatic pop transition without a target state.
+     * The state machine runs it after a transition that ends in this state.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun automaticPop(action: AsyncStateAction<C, A, R>?) {
         fsm.automaticPop(currentState, null, null, null, action)
     }
 
+    /**
+     * Declares an automatic pop transition that is followed by a push transition.
+     * The state machine runs it after a transition that ends in this state.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun automaticPop(targetMap: String, targetState: S, action: AsyncStateAction<C, A, R>?) {
         fsm.automaticPop(currentState, targetMap, targetState, null, action)
     }
 
+    /**
+     * Declares an automatic pop transition with a target state, and with a guard.
+     * The state machine runs it after a transition that ends in this state, only when the guard returns `true`.
+     * @param targetState The state of the previous state map after the transition.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun automaticPop(targetState: S, guard: StateGuard<C, A>, action: AsyncStateAction<C, A, R>?) {
         fsm.automaticPop(currentState, null, targetState, guard, action)
     }
 
+    /**
+     * Declares an automatic pop transition without a target state, and with a guard.
+     * The state machine runs it after a transition that ends in this state, only when the guard returns `true`.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun automaticPop(guard: StateGuard<C, A>, action: AsyncStateAction<C, A, R>?) {
         fsm.automaticPop(currentState, null, null, guard, action)
     }
 
+    /**
+     * Declares an automatic pop transition that is followed by a push transition, and with a guard.
+     * The state machine runs it after a transition that ends in this state, only when the guard returns `true`.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun automaticPop(targetMap: String, targetState: S, guard: StateGuard<C, A>, action: AsyncStateAction<C, A, R>?) {
         fsm.automaticPop(currentState, targetMap, targetState, guard, action)
     }
 
+    /**
+     * Declares a timeout pop transition with a target state.
+     * The state machine starts a timer when it enters this state. When the timer expires, it removes the current state map from the stack.
+     * The state machine cancels the timer when it leaves this state.
+     * @param targetState The state of the previous state map after the transition.
+     * @param timeout The time to wait in milliseconds.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPop(targetState: S, timeout: Long, action: AsyncStateAction<C, A, R>?) {
         fsm.timeoutPop(currentState, null, targetState, { timeout }, null, action)
     }
 
+    /**
+     * Declares a timeout pop transition with a target state.
+     * The state machine starts a timer when it enters this state. When the timer expires, it removes the current state map from the stack.
+     * The state machine cancels the timer when it leaves this state.
+     * @param targetState The state of the previous state map after the transition.
+     * @param timeout A lambda that has the context as `this` and returns the time to wait in milliseconds.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPop(targetState: S, timeout: C.() -> Long, action: AsyncStateAction<C, A, R>?) {
         fsm.timeoutPop(currentState, null, targetState, timeout, null, action)
     }
 
+    /**
+     * Declares a timeout pop transition without a target state.
+     * The state machine starts a timer when it enters this state. When the timer expires, it removes the current state map from the stack.
+     * The state machine cancels the timer when it leaves this state.
+     * @param timeout The time to wait in milliseconds.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPop(timeout: Long, action: AsyncStateAction<C, A, R>?) {
         fsm.timeoutPop(currentState, null, null, { timeout }, null, action)
     }
 
+    /**
+     * Declares a timeout pop transition without a target state.
+     * The state machine starts a timer when it enters this state. When the timer expires, it removes the current state map from the stack.
+     * The state machine cancels the timer when it leaves this state.
+     * @param timeout A lambda that has the context as `this` and returns the time to wait in milliseconds.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPop(timeout: C.() -> Long, action: AsyncStateAction<C, A, R>?) {
         fsm.timeoutPop(currentState, null, null, timeout, null, action)
     }
 
+    /**
+     * Declares a timeout pop transition that is followed by a push transition.
+     * The state machine starts a timer when it enters this state. When the timer expires, it removes the current state map from the stack.
+     * The state machine cancels the timer when it leaves this state.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param timeout The time to wait in milliseconds.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPop(targetMap: String, targetState: S, timeout: Long, action: AsyncStateAction<C, A, R>?) {
         fsm.timeoutPop(currentState, targetMap, targetState, { timeout }, null, action)
     }
 
+    /**
+     * Declares a timeout pop transition that is followed by a push transition.
+     * The state machine starts a timer when it enters this state. When the timer expires, it removes the current state map from the stack.
+     * The state machine cancels the timer when it leaves this state.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param timeout A lambda that has the context as `this` and returns the time to wait in milliseconds.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPop(targetMap: String, targetState: S, timeout: C.() -> Long, action: AsyncStateAction<C, A, R>?) {
         fsm.timeoutPop(currentState, targetMap, targetState, timeout, null, action)
     }
 
+    /**
+     * Declares a timeout pop transition with a target state, and with a guard.
+     * The state machine starts a timer when it enters this state. When the timer expires, it removes the current state map from the stack.
+     * The state machine cancels the timer when it leaves this state.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param targetState The state of the previous state map after the transition.
+     * @param timeout The time to wait in milliseconds.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPop(targetState: S, timeout: Long, guard: StateGuard<C, A>, action: AsyncStateAction<C, A, R>?) {
         fsm.timeoutPop(currentState, null, targetState, { timeout }, guard, action)
     }
 
+    /**
+     * Declares a timeout pop transition with a target state, and with a guard.
+     * The state machine starts a timer when it enters this state. When the timer expires, it removes the current state map from the stack.
+     * The state machine cancels the timer when it leaves this state.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param targetState The state of the previous state map after the transition.
+     * @param timeout A lambda that has the context as `this` and returns the time to wait in milliseconds.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPop(targetState: S, timeout: C.() -> Long, guard: StateGuard<C, A>, action: AsyncStateAction<C, A, R>?) {
         fsm.timeoutPop(currentState, null, targetState, timeout, guard, action)
     }
 
+    /**
+     * Declares a timeout pop transition without a target state, and with a guard.
+     * The state machine starts a timer when it enters this state. When the timer expires, it removes the current state map from the stack.
+     * The state machine cancels the timer when it leaves this state.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param timeout The time to wait in milliseconds.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPop(timeout: Long, guard: StateGuard<C, A>, action: AsyncStateAction<C, A, R>?) {
         fsm.timeoutPop(currentState, null, null, { timeout }, guard, action)
     }
 
+    /**
+     * Declares a timeout pop transition without a target state, and with a guard.
+     * The state machine starts a timer when it enters this state. When the timer expires, it removes the current state map from the stack.
+     * The state machine cancels the timer when it leaves this state.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param timeout A lambda that has the context as `this` and returns the time to wait in milliseconds.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPop(timeout: C.() -> Long, guard: StateGuard<C, A>, action: AsyncStateAction<C, A, R>?) {
         fsm.timeoutPop(currentState, null, null, timeout, guard, action)
     }
 
+    /**
+     * Declares a timeout pop transition that is followed by a push transition, and with a guard.
+     * The state machine starts a timer when it enters this state. When the timer expires, it removes the current state map from the stack.
+     * The state machine cancels the timer when it leaves this state.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param timeout A lambda that has the context as `this` and returns the time to wait in milliseconds.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPop(
         targetMap: String,
         targetState: S,
@@ -285,6 +530,17 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
         fsm.timeoutPop(currentState, targetMap, targetState, timeout, guard, action)
     }
 
+    /**
+     * Declares a timeout pop transition that is followed by a push transition, and with a guard.
+     * The state machine starts a timer when it enters this state. When the timer expires, it removes the current state map from the stack.
+     * The state machine cancels the timer when it leaves this state.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param timeout The time to wait in milliseconds.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPop(
         targetMap: String,
         targetState: S,
@@ -295,22 +551,69 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
         fsm.timeoutPop(currentState, targetMap, targetState, { timeout }, guard, action)
     }
 
+    /**
+     * Declares an automatic push transition.
+     * The state machine runs it after a transition that ends in this state.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun automaticPush(targetMap: String, targetState: S, action: AsyncStateAction<C, A, R>?) {
         fsm.automaticPush(currentState, targetMap, targetState, null, action)
     }
 
+    /**
+     * Declares an automatic push transition with a guard.
+     * The state machine runs it after a transition that ends in this state, only when the guard returns `true`.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun automaticPush(targetMap: String, targetState: S, guard: StateGuard<C, A>, action: AsyncStateAction<C, A, R>?) {
         fsm.automaticPush(currentState, targetMap, targetState, guard, action)
     }
 
+    /**
+     * Declares a timeout push transition.
+     * The state machine starts a timer when it enters this state. When the timer expires, the current state map goes on the stack.
+     * The target map becomes the current state map and the state changes to the target state.
+     * The state machine cancels the timer when it leaves this state.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param timeout A lambda that has the context as `this` and returns the time to wait in milliseconds.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPush(targetMap: String, targetState: S, timeout: C.() -> Long, action: AsyncStateAction<C, A, R>?) {
         fsm.timeoutPush(currentState, targetMap, targetState, timeout, null, action)
     }
 
+    /**
+     * Declares a timeout push transition.
+     * The state machine starts a timer when it enters this state. When the timer expires, the current state map goes on the stack.
+     * The target map becomes the current state map and the state changes to the target state.
+     * The state machine cancels the timer when it leaves this state.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param timeout The time to wait in milliseconds.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPush(targetMap: String, targetState: S, timeout: Long, action: AsyncStateAction<C, A, R>?) {
         fsm.timeoutPush(currentState, targetMap, targetState, { timeout }, null, action)
     }
 
+    /**
+     * Declares a timeout push transition with a guard.
+     * The state machine starts a timer when it enters this state. When the timer expires, the current state map goes on the stack.
+     * The target map becomes the current state map and the state changes to the target state.
+     * The state machine cancels the timer when it leaves this state.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param timeout The time to wait in milliseconds.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPush(
         targetMap: String,
         targetState: S,
@@ -321,6 +624,18 @@ class AsyncDslStateMapEventHandler<S, E, C, A, R>(
         fsm.timeoutPush(currentState, targetMap, targetState, { timeout }, guard, action)
     }
 
+    /**
+     * Declares a timeout push transition with a guard.
+     * The state machine starts a timer when it enters this state. When the timer expires, the current state map goes on the stack.
+     * The target map becomes the current state map and the state changes to the target state.
+     * The state machine cancels the timer when it leaves this state.
+     * The state machine uses the transition only when the guard returns `true`.
+     * @param targetMap The name of the target state map.
+     * @param targetState The state in the target state map.
+     * @param timeout A lambda that has the context as `this` and returns the time to wait in milliseconds.
+     * @param guard The guard expression. It must return `true` to use the transition.
+     * @param action An optional `suspend` lambda to run during the transition.
+     */
     fun timeoutPush(
         targetMap: String,
         targetState: S,

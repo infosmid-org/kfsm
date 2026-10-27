@@ -4,16 +4,18 @@
 
 == Introduction
 
-Having used various incarnations of link:http://smc.sourceforge.net/[SMC] over the years we decided to try it again and discovered it didn't have specific support for Kotlin.
-Instead of creating a generator for Kotlin we decided to attempt a Kotlin DSL along with a simple implementation.
+We have used link:http://smc.sourceforge.net/[SMC] for many years.
+When we tried it again, it had no specific support for Kotlin.
+We did not create a code generator for Kotlin.
+Instead, we made a Kotlin DSL and a simple implementation.
 
-To learn more about Finite State Machines visit:
+To learn more about finite state machines, see:
 
 * link:https://en.wikipedia.org/wiki/Finite-state_machine[Wikipedia - Finite-state machine]
 * link:https://brilliant.org/wiki/finite-state-machines/[Brilliant - Finite State Machines]
 * link:http://smc.sourceforge.net/slides/SMC_Tutorial.pdf[SMC Tutorial]
 
-The <<Tutorial>> provides examples of how to compose a DSL and FSM.
+The <<Tutorial>> has examples that show how to write a state machine definition with the DSL.
 
 == Links
 
@@ -23,23 +25,23 @@ The <<Tutorial>> provides examples of how to compose a DSL and FSM.
 
 == Features
 
-This Finite state machine implementation has the following features:
+kfsm has these features:
 
-* Event driven state machine.
-* External and internal transitions
-* State entry and exit actions.
-* Default state actions.
-* Default entry and exit actions.
-* Determine allowed events for current or given state.
-* Multiple state maps with push / pop transitions
-* Automatic transitions
-* Externalisation of state.
-* Simple Visualization.
-* Detailed Visualization.
-* Visualization Gradle Plugin
-* Coroutines
-* Timeout Transitions
-* StateChange notification action
+* Event-driven state machine.
+* External transitions and internal transitions.
+* Entry actions and exit actions for each state.
+* Default actions for each state.
+* Default entry actions and default exit actions.
+* A query for the events that the current state or a given state allows.
+* Multiple state maps with push transitions and pop transitions.
+* Automatic transitions.
+* Externalized state.
+* Simple visualization.
+* Detailed visualization.
+* Visualization Gradle plugin.
+* Coroutines.
+* Timeout transitions.
+* State change notification action.
 
 == Tutorial
 
