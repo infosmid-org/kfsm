@@ -1,0 +1,129 @@
+/*
+ * site-docs.gradle — shared template for every infosmid-org project.
+ *
+ * Packages the user guide and API docs into one zip:
+ *
+ *     <group>:<artifactId>:<version>:docs@zip
+ *
+ * The zip is attached to the project's main Maven publication. It is published
+ * with the jars, the POM and the signatures to Maven Central and GitHub Packages.
+ * infosmid-org.github.io resolves the zip and extracts it into
+ * /projects/<artifactId>/.
+ *
+ * Zip layout (this is the contract with the site build):
+ *
+ *     index.html          user guide entry point (Asciidoctor or Markdown output)
+ *     ...                 images, css and other guide files
+ *     api/index.html      Dokka HTML, Javadoc or Groovydoc
+ *     site-docs.json      manifest the site build uses for the projects index
+ *
+ * Usage (set these before you call `apply from`):
+ *
+ *     ext {
+ *         siteDocsTitle       = 'KFSM'
+ *         siteDocsSummary     = 'Kotlin finite-state machine'
+ *         siteDocsGuideTask   = 'asciidoctor'        // task whose outputs form the guide
+ *         siteDocsApiTask     = 'dokkaHtml'          // dokkaHtml | dokkaGeneratePublicationHtml | javadoc | groovydoc
+ *         siteDocsPublication = 'kotlinMultiplatform' // maven | mavenJava | pluginMaven | kotlinMultiplatform
+ *         // optional
+ *         siteDocsArtifactId  = 'kfsm'               // defaults to rootProject.name
+ *         siteDocsClassifier  = 'docs'               // defaults to 'docs'
+ *         siteDocsTags        = ['Kotlin', 'FSM']
+ *         siteDocsLicense     = 'Apache-2.0'
+ *         siteDocsSourceUrl   = 'https://github.com/infosmid-org/kfsm'
+ *     }
+ *     apply from: "$rootDir/gradle/site-docs.gradle"
+ *
+ * Build it locally:   ./gradlew siteDocsZip
+ * Output:             build/site-docs/<artifactId>-<version>-docs.zip
+ */
+
+def prop = { String name, def fallback -> project.hasProperty(name) ? project.property(name) : fallback }
+
+def docsArtifactId = prop('siteDocsArtifactId', rootProject.name) as String
+def docsClassifier = prop('siteDocsClassifier', 'docs') as String
+def guideTaskName  = prop('siteDocsGuideTask', 'asciidoctor') as String
+def apiTaskName    = prop('siteDocsApiTask', 'javadoc') as String
+def publicationName = prop('siteDocsPublication', 'maven') as String  // vanniktech default for java-library
+
+def manifest = [
+    name       : docsArtifactId,
+    group      : project.group.toString(),
+    version    : project.version.toString(),
+    title      : prop('siteDocsTitle', docsArtifactId).toString(),
+    summary    : (prop('siteDocsSummary', project.description ?: '')).toString(),
+    license    : prop('siteDocsLicense', 'Apache-2.0').toString(),
+    tags       : (prop('siteDocsTags', []) as List).collect { it.toString() },
+    sourceUrl  : prop('siteDocsSourceUrl', "https://github.com/infosmid-org/${rootProject.name}").toString(),
+    guide      : 'index.html',
+    api        : 'api/index.html'
+]
+
+def manifestFile = layout.buildDirectory.file('site-docs/manifest/site-docs.json')
+
+def siteDocsManifest = tasks.register('siteDocsManifest') {
+    group = 'documentation'
+    description = 'Writes site-docs.json for the infosmid.org projects index.'
+    inputs.property('manifest', manifest)
+    outputs.file(manifestFile)
+    doLast {
+        def f = manifestFile.get().asFile
+        f.parentFile.mkdirs()
+        f.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(manifest)) + '\n'
+    }
+}
+
+def siteDocsZip = tasks.register('siteDocsZip', Zip) {
+    group = 'documentation'
+    description = "Packages the guide and API docs as ${docsArtifactId}-<version>-${docsClassifier}.zip."
+    archiveBaseName = docsArtifactId
+    archiveClassifier = docsClassifier
+    archiveExtension = 'zip'
+    destinationDirectory = layout.buildDirectory.dir('site-docs')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    // Reproducible archives produce identical checksums when you run the build again.
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+
+    from(tasks.named(guideTaskName))
+    from(tasks.named(apiTaskName)) { into 'api' }
+    from(siteDocsManifest)
+
+    // Stop the build if a gated or skipped task produced an incomplete zip.
+    doLast {
+        def required = ['index.html', 'api/index.html', 'site-docs.json']
+        def zip = new java.util.zip.ZipFile(archiveFile.get().asFile)
+        try {
+            def missing = required.findAll { zip.getEntry(it) == null }
+            if (missing) {
+                throw new GradleException("${archiveFile.get().asFile.name} is missing ${missing}. " +
+                    "Check that '${guideTaskName}' and '${apiTaskName}' ran and wrote output.")
+            }
+        } finally {
+            zip.close()
+        }
+    }
+}
+
+tasks.named('assemble') { dependsOn(siteDocsZip) }
+
+// Attach the zip to the main publication, so it shares the coordinates, POM and signing.
+// Do not create a second publication with the same coordinates. Gradle and Maven Central
+// do not support that.
+plugins.withId('maven-publish') {
+    publishing.publications.withType(MavenPublication).configureEach { pub ->
+        if (pub.name == publicationName) {
+            pub.artifact(siteDocsZip) {
+                classifier = docsClassifier
+                extension = 'zip'
+            }
+        }
+    }
+}
+
+afterEvaluate {
+    if (plugins.hasPlugin('maven-publish') && publishing.publications.findByName(publicationName) == null) {
+        logger.warn("site-docs: no publication named '${publicationName}'. Found: ${publishing.publications*.name}. " +
+            "Set ext.siteDocsPublication.")
+    }
+}

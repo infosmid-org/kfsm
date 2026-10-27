@@ -15,10 +15,11 @@
  */
 package org.infosmid.kfsm.async
 
+import kotlinx.coroutines.CoroutineScope
+import org.infosmid.dbc.preconditionNotNull
 import org.infosmid.kfsm.ExternalState
 import org.infosmid.kfsm.Stack
 import org.infosmid.kfsm.TransitionType
-import kotlinx.coroutines.CoroutineScope
 
 class AsyncStateMachineInstance<S, E, C, A, R>(
     /**
@@ -87,8 +88,8 @@ class AsyncStateMachineInstance<S, E, C, A, R>(
 
     internal suspend fun execute(transition: AsyncTransition<S, E, C, A, R>, arg: A?): R? {
         val result = if (transition.type == TransitionType.PUSH) {
-            require(transition.targetState != null) { "Target state cannot be null for pushTransition" }
-            require(transition.targetMap != null) { "Target map cannot be null for pushTransition" }
+            preconditionNotNull(transition.targetState) { "Target state cannot be null for pushTransition" }
+            preconditionNotNull(transition.targetMap) { "Target map cannot be null for pushTransition" }
             if (transition.targetMap != currentStateMap.name) {
                 executePush(transition, arg)
             } else {

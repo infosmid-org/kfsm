@@ -25,7 +25,7 @@ class StateMachineDefinition<S, E, C, A, R>(
     private val deriveInitialState: StateQuery<C, S>?,
     private val deriveInitialMap: StateMapQuery<C, S>?,
     /**
-     * The top level state map will be created when the state machine is created.
+     * The top-level state map will be created when the state machine is created.
      */
     val defaultStateMap: StateMapDefinition<S, E, C, A, R>,
     /**
@@ -57,11 +57,11 @@ class StateMachineDefinition<S, E, C, A, R>(
         context: C,
         parentFsm: StateMachineInstance<S, E, C, A, R>,
         initialState: S? = null,
-        intitialExternalState: ExternalState<S>? = null
+        initialExternalState: ExternalState<S>? = null
     ): StateMapInstance<S, E, C, A, R> {
         return when {
-            intitialExternalState != null -> {
-                intitialExternalState.forEach { (initial, mapName) ->
+            initialExternalState != null -> {
+                initialExternalState.forEach { (initial, mapName) ->
                     createMap(mapName, context, parentFsm, initial)
                 }
                 parentFsm.mapStack.pop()

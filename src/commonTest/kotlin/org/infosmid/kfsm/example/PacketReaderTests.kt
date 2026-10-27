@@ -15,6 +15,7 @@
  */
 package org.infosmid.kfsm.example
 
+import org.infosmid.dbc.preconditionNotNull
 import org.infosmid.kfsm.stateMachine
 
 
@@ -94,7 +95,7 @@ class Packet(private val protocolHandler: ProtocolHandler) :
 
     override fun addByte(byte: Int) {
         val field = currentField
-        requireNotNull(field) { "expected currentField to have a value" }
+        preconditionNotNull(field) { "expected currentField to have a value" }
         field.addByte(byte)
     }
 

@@ -120,7 +120,65 @@ dependencies {
 
 }
 
-apply from: "$rootProject.projectDir/gradle/docs.gradle"
+asciidoc {
+    publications {
+        main {
+            sourceSet {
+                sourceDir = 'src/docs/asciidoc'
+                sources {
+                    include 'index.adoc'
+                }
+                resources {
+                    include '**/*.png'
+                    include '**/*.xml'
+                    include '**/*.js'
+                    include '**/*.css'
+                }
+                attributes {
+                    addAll 'toc': 'left',
+                        'idprefix': '',
+                        'idseparator': '-',
+                        'docinfo1': '',
+                        // Lets index.adoc link to the API docs: link:{api-docs}/index.html[API]
+                        'api-docs': 'api'
+                }
+                missingIncludesAreFatal()
+            }
+            output 'asciidoctorj', 'html'
+        }
+    }
+}
+
+// The docs zip has its own publication (kfsm-doc) so it never goes to Maven Central.
+publishing {
+    publications {
+        documentation(MavenPublication) {
+            artifactId = "${rootProject.name}-doc"
+        }
+    }
+}
+tasks.withType(PublishToMavenRepository).configureEach {
+    onlyIf {
+        if (publication?.name == 'documentation') {
+            return repository?.name == 'GitHubPackages'
+        }
+        return true
+    }
+}
+
+// Properties read by gradle/site-docs.gradle (siteDocsZip); must be set before it is applied.
+ext {
+    siteDocsTitle       = 'KFSM'
+    siteDocsSummary     = project.description
+    siteDocsGuideTask   = 'asciidoctorHtml'
+    siteDocsApiTask     = 'dokkaGeneratePublicationHtml'
+    siteDocsPublication = 'documentation'
+    siteDocsArtifactId  = rootProject.name
+    siteDocsTags        = ['Kotlin', 'Multiplatform', 'FSM', 'DSL']
+    siteDocsLicense     = 'Apache-2.0'
+    siteDocsSourceUrl   = "https://github.com/infosmid-org/${rootProject.name}".toString()
+}
+apply from: "$rootProject.projectDir/gradle/site-docs.gradle"
 
 publishing {
     repositories {
@@ -193,6 +251,8 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
     macosArm64()
+    linuxX64()
+    linuxArm64()
     wasmJs {
         browser {
             testTask {
@@ -216,6 +276,7 @@ kotlin {
         }
         commonMain {
             dependencies {
+                api libs.dbc
                 api libs.kotlinx.coroutines.core
             }
         }
@@ -342,13 +403,14 @@ project.afterEvaluate {
 }
 
 assemble.dependsOn('generateFsmViz')
-docs.dependsOn('generateFsmViz')
+siteDocsZip.dependsOn('generateFsmViz')
 
 kfsmViz {
     fsm('TurnstileFSM') {
         outputFolder = file('generated')
         input = file('src/commonTest/kotlin/org/infosmid/kfsm/example/TurnstileTypes.kt')
         isGeneratePlantUml = true
+        isGenerateMermaid = true
         isGenerateAsciidoc = true
         output = 'turnstile-detail'
     }
@@ -356,6 +418,7 @@ kfsmViz {
         outputFolder = file('generated')
         input = file('src/commonTest/kotlin/org/infosmid/kfsm/example/PayingTurnstileTypes.kt')
         isGeneratePlantUml = true
+        isGenerateMermaid = true
         isGenerateAsciidoc = true
         output = 'paying-turnstile-detail'
     }
@@ -364,6 +427,7 @@ kfsmViz {
         outputFolder = file('generated')
         input = file('src/commonTest/kotlin/org/infosmid/kfsm/example/SecureTurnstile.kt')
         isGeneratePlantUml = true
+        isGenerateMermaid = true
         isGenerateAsciidoc = true
         output = 'secure-turnstile-detail'
     }
@@ -372,6 +436,7 @@ kfsmViz {
         outputFolder = file('generated')
         input = file('src/commonTest/kotlin/org/infosmid/kfsm/example/TimeoutSecureTurnstile.kt')
         isGeneratePlantUml = true
+        isGenerateMermaid = true
         isGenerateAsciidoc = true
         output = 'timeout-turnstile-detail'
     }
@@ -379,7 +444,34 @@ kfsmViz {
         outputFolder = file('generated')
         input = file('src/commonTest/kotlin/org/infosmid/kfsm/example/PacketReaderTests.kt')
         isGeneratePlantUml = true
+        isGenerateMermaid = true
         isGenerateAsciidoc = true
         output = 'packet-reader-detail'
+    }
+}
+
+tasks.register('updateReadmeVersion') {
+    group = 'documentation'
+    description = 'Modifies :project-version: attribute at the top of README.adoc'
+    def readmeFile = layout.projectDirectory.file('README.adoc').asFile
+    def projectVersion = providers.provider { project.version.toString() }
+    inputs.property('version', projectVersion)
+    outputs.file(readmeFile)
+    doLast {
+        if (!readmeFile.exists()) return
+        def content = readmeFile.text
+        def versionStr = projectVersion.get()
+        def versionAttr = ":project-version: ${versionStr}"
+        if (content =~ /(?m)^:project-version:.*$/) {
+            content = content.replaceFirst(/(?m)^:project-version:.*$/, versionAttr)
+        } else {
+            def matcher = content =~ /(?m)^(=[^\r\n]*\r?\n)/
+            if (matcher.find()) {
+                content = content.substring(0, matcher.end()) + versionAttr + "\n" + content.substring(matcher.end())
+            } else {
+                content = versionAttr + "\n" + content
+            }
+        }
+        readmeFile.text = content
     }
 }

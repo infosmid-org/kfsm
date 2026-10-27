@@ -15,6 +15,8 @@
  */
 package org.infosmid.kfsm
 
+import org.infosmid.dbc.precondition
+
 /**
  * @suppress
  * @author Corneil du Plessis
@@ -28,7 +30,7 @@ class StateMapInstance<S, E, C, A, R>(
     val definition: StateMapDefinition<S, E, C, A, R>
 ) {
     init {
-        require(definition.validStates.contains(newState)) { "Initial state is $newState and not in ${definition.validStates}" }
+        precondition(definition.validStates.contains(newState)) { "Initial state is $newState and not in ${definition.validStates}" }
         definition.invariants.forEach { checkInvariant(context, it) }
     }
 

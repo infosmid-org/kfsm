@@ -115,3 +115,4 @@ codemr/
 kotlin-js-store/
 gradle.local.properties
 /.kotlin/metadata
+/RELEASE_NOTES_SUBST.md

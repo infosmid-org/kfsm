@@ -1,0 +1,14 @@
+---
+title: TurnstileFSM
+config:
+  themeCSS: |
+    .edgeLabel p:has(br) { text-align: left; }
+---
+stateDiagram-v2
+state TurnstileFSM {
+  [*] --> LOCKED
+  LOCKED --> UNLOCKED : COIN#160;#8594;#160;#123;<br/>unlock()<br/>#125;
+  UNLOCKED --> UNLOCKED : COIN#160;#8594;#160;#123;<br/>returnCoin()<br/>#125;
+  UNLOCKED --> LOCKED : PASS#160;#8594;#160;#123;<br/>lock()<br/>#125;
+}
+

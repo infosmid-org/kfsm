@@ -15,6 +15,7 @@
  */
 package org.infosmid.kfsm.async
 
+import org.infosmid.dbc.precondition
 import org.infosmid.kfsm.AsyncStateAction
 import org.infosmid.kfsm.TransitionType
 
@@ -27,7 +28,7 @@ open class AsyncTransition<S, E, C, A, R>(
 ) {
     init {
         if (type == TransitionType.PUSH) {
-            require(targetState != null) { "targetState is required for push transition" }
+            precondition(targetState != null) { "targetState is required for push transition" }
         }
     }
 

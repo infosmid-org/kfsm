@@ -24,7 +24,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Build, test
-        run: ./gradlew build
+        run: ./gradlew check
   test-macos:
     permissions:
       packages: read

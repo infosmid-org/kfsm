@@ -17,6 +17,7 @@
 
 package org.infosmid.kfsm.async
 
+import org.infosmid.dbc.precondition
 import org.infosmid.kfsm.AsyncStateAction
 import org.infosmid.kfsm.AsyncStateChangeAction
 import org.infosmid.kfsm.Condition
@@ -42,7 +43,7 @@ class AsyncStateMachineBuilder<S, E, C, A, R>(validMapStates: Set<S>, internal v
      * @param init Is a function that receives a context and returns the state that represents the context
      */
     fun initialState(init: StateQuery<C, S>) {
-        require(!completed) { "Statemachine has been completed" }
+        precondition(!completed) { "Statemachine has been completed" }
         deriveInitialState = init
     }
 
@@ -52,7 +53,7 @@ class AsyncStateMachineBuilder<S, E, C, A, R>(validMapStates: Set<S>, internal v
      * @param init Is a function that will use the context to provide a list which will be pushed on the stack. The last item in the list will become the current state.
      */
     fun initialStates(init: StateMapQuery<C, S>) {
-        require(!completed) { "Statemachine has been completed" }
+        precondition(!completed) { "Statemachine has been completed" }
         deriveInitialStateMap = init
     }
 
@@ -74,9 +75,9 @@ class AsyncStateMachineBuilder<S, E, C, A, R>(validMapStates: Set<S>, internal v
         name: String,
         validStates: Set<S>
     ): AsyncStateMapBuilder<S, E, C, A, R> {
-        require(name.trim().isNotEmpty()) { "statemap name must not be empty" }
-        require(name != "default") { "Map cannot be named 'default'" }
-        require(validStates.isNotEmpty()) { "Provide at least one entty in validStates" }
+        precondition(name.trim().isNotEmpty()) { "statemap name must not be empty" }
+        precondition(name != "default") { "Map cannot be named 'default'" }
+        precondition(validStates.isNotEmpty()) { "Provide at least one entty in validStates" }
         val stateMapBuilder =
             AsyncStateMapBuilder<S, E, C, A, R>(validStates, name, this)
         namedStateMaps[name] = stateMapBuilder
@@ -90,7 +91,7 @@ class AsyncStateMachineBuilder<S, E, C, A, R>(validMapStates: Set<S>, internal v
     fun complete(): AsyncStateMachineDefinition<S, E, C, A, R> {
         completed = true
         if (namedStateMaps.isNotEmpty()) {
-            require(this.deriveInitialState == null) { "deriveInitialState cannot be used with named state maps" }
+            precondition(this.deriveInitialState == null) { "deriveInitialState cannot be used with named state maps" }
         }
         return AsyncStateMachineDefinition(
             this.defaultInitialState,

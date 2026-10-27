@@ -1,0 +1,23 @@
+---
+title: PayingTurnstileFSM
+config:
+  themeCSS: |
+    .edgeLabel p:has(br) { text-align: left; }
+---
+stateDiagram-v2
+state PayingTurnstileFSM {
+  [*] --> UNLOCKED
+  LOCKED --> COINS : COIN#160;#8594;#160;#123;value#8594;<br/>requireNotNull(value)#123;"argument#160;required#160;for#160;COIN"#125;<br/>coin(value)<br/>unlock()<br/>reset()<br/>#125;
+  LOCKED --> COINS : COIN#160;[value#8594;<br/>requireNotNull(value)#123;"argument#160;required#160;for#160;COIN"#125;#35;59;<br/>value+coins#160;#60;#160;requiredCoins#35;59;]#160;#8594;#160;#123;value#8594;<br/>requireNotNull(value)#123;"argument#160;required#160;for#160;COIN"#125;<br/>println("PUSH#160;TRANSITION")<br/>coin(value)<br/>println("Coins=$coins,#160;Please#160;add#160;$#123;requiredCoins-coins#125;")<br/>#125;
+  UNLOCKED --> UNLOCKED : COIN#160;#8594;#160;#123;value#8594;<br/>requireNotNull(value)#123;"argument#160;required#160;for#160;COIN"#125;<br/>returnCoin(coin(value))<br/>#125;
+  UNLOCKED --> LOCKED : PASS#160;#8594;#160;#123;<br/>lock()<br/>#125;
+  state coins {
+    COINS --> UNLOCKED : #60;#60;automatic#62;#62;#160;[coins#160;#62;#160;requiredCoins]#160;#8594;#160;#123;<br/>println("automaticPop#58;returnCoin")<br/>returnCoin(coins-requiredCoins)<br/>unlock()<br/>reset()<br/>#125;
+    COINS --> UNLOCKED : #60;#60;automatic#62;#62;#160;[coins#160;==#160;requiredCoins]#160;#8594;#160;#123;<br/>println("automaticPop")<br/>unlock()<br/>reset()<br/>#125;
+    COINS --> COINS : COIN#160;#8594;#160;#123;value#8594;<br/>requireNotNull(value)#123;"argument#160;required#160;for#160;COIN"#125;<br/>coin(value)<br/>println("Coins=$coins")<br/>if(coins#160;#60;#160;requiredCoins)#123;<br/>println("Please#160;add#160;$#123;requiredCoins-coins#125;")<br/>#125;<br/>#125;
+  }
+}
+note left of PayingTurnstileFSM
+#60;#60;invariant#62;#62;#160;#123;coins#160;#62;=#160;0#125;
+end note
+

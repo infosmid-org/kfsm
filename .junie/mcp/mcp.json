@@ -1,1 +1,39 @@
-{"mcpServers":{"kotlin-java":{"command":"/home/corneil/.local/bin/kotlin-java-mcp","args":["--project","/home/corneil/work/infosmid/anvil"]},"idea":{"command":"/home/corneil/.local/share/JetBrains/Toolbox/apps/intellij-idea-ultimate/bin/idea","args":["stdioMcpServer"],"env":{"IJ_MCP_SERVER_PORT":"64342"}},"intellij-index":{"command":""},"codegraphcontext":{"command":"codegraphcontext","args":["mcp","start"]},"fetch":{"command":"docker","args":["run","-i","--rm","mcp/fetch:latest"]}}}
+{
+    "mcpServers": {
+        "kotlin-java": {
+            "command": "/home/corneil/.local/bin/kotlin-java-mcp",
+            "args": [
+                "--project",
+                "/home/corneil/work/infosmid/anvil"
+            ]
+        },
+        "idea": {
+            "command": "/home/corneil/.local/share/JetBrains/Toolbox/apps/intellij-idea-ultimate/bin/idea",
+            "args": [
+                "stdioMcpServer"
+            ],
+            "env": {
+                "IJ_MCP_SERVER_PORT": "64342"
+            }
+        },
+        "intellij-index": {
+            "command": ""
+        },
+        "codegraphcontext": {
+            "command": "codegraphcontext",
+            "args": [
+                "mcp",
+                "start"
+            ]
+        },
+        "fetch": {
+            "command": "docker",
+            "args": [
+                "run",
+                "-i",
+                "--rm",
+                "mcp/fetch:latest"
+            ]
+        }
+    }
+}

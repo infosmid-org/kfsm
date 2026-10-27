@@ -17,7 +17,7 @@ Gradle wrapper, JDK 17 toolchain, Kotlin 2.4.21. Targets are fixed in `build.gra
 - JVM tests only: `./gradlew jvmTest`; Android host tests: `./gradlew testAndroidHostTest`
 - Single test class: `./gradlew jvmTest --tests "org.infosmid.kfsm.example.TurnstileFsmTests"`
 - Full local build + publish to maven local (CI-like): `./build-linux.sh`
-- Docs: `./gradlew docs` (asciidoctor 5.x model via `asciidoc {}` in `gradle/docs.gradle` + Dokka V2) writes `build/distributions/*-doc.zip`; `./gradlew renderPlantUml` regenerates the PNGs in `src/docs/asciidoc` from `src/docs/plantuml` (manual, needs graphviz `dot`). Dependency and plugin versions live in `gradle/libs.versions.toml`.
+- Docs: `./gradlew siteDocsZip` (asciidoctor 5.x model via `asciidoc {}` in `build.gradle` + Dokka V2, packaged by `gradle/site-docs.gradle`) writes `build/site-docs/*-docs.zip`; `./gradlew renderPlantUml` regenerates the PNGs in `src/docs/asciidoc` from `src/docs/plantuml` (manual, needs graphviz `dot`). Dependency and plugin versions live in `gradle/libs.versions.toml`.
 
 CI (`.github/workflows`) runs `./gradlew build` on ubuntu (+dokka) and macOS. wasmJs browser tests need headless Chrome. Keep `mavenLocal()` restricted to group `org.infosmid` (a stale partial `kotlinx-coroutines` in `~/.m2` otherwise breaks wasm resolution).
 

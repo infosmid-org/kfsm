@@ -15,6 +15,7 @@
  */
 package org.infosmid.kfsm.example
 
+import org.infosmid.dbc.preconditionNotNull
 import org.infosmid.kfsm.stateMachine
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -66,14 +67,14 @@ class KeyboardBufferFSM(context: KeyboardBuffer) {
             }
             whenState(KeyboardBufferStates.DEFAULT) {
                 onEvent(KeyboardEvent.ANY_KEY) { input ->
-                    requireNotNull(input) { "input is required" }
+                    preconditionNotNull(input) { "input is required" }
                     add(input)
                 }
                 onEvent(KeyboardEvent.CAPS_LOCK to KeyboardBufferStates.CAPS_LOCKED) {}
             }
             whenState(KeyboardBufferStates.CAPS_LOCKED) {
                 onEvent(KeyboardEvent.ANY_KEY) { input ->
-                    requireNotNull(input) { "input is required" }
+                    preconditionNotNull(input) { "input is required" }
                     addUpperCase(input)
                 }
                 onEvent(KeyboardEvent.CAPS_LOCK to KeyboardBufferStates.DEFAULT) {}

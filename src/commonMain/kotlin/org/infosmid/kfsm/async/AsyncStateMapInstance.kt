@@ -17,6 +17,7 @@ package org.infosmid.kfsm.async
 
 import org.infosmid.kfsm.checkInvariant
 import kotlinx.coroutines.CoroutineScope
+import org.infosmid.dbc.precondition
 
 class AsyncStateMapInstance<S, E, C, A, R>(
     val context: C,
@@ -27,7 +28,7 @@ class AsyncStateMapInstance<S, E, C, A, R>(
     val coroutineScope: CoroutineScope
 ) {
     init {
-        require(definition.validStates.contains(newState)) { "Initial state is $newState and not in ${definition.validStates}" }
+        precondition(definition.validStates.contains(newState)) { "Initial state is $newState and not in ${definition.validStates}" }
         definition.invariants.forEach { checkInvariant(context, it) }
     }
 

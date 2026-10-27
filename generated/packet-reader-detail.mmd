@@ -1,0 +1,25 @@
+---
+title: PacketReaderFSM
+config:
+  themeCSS: |
+    .edgeLabel p:has(br) { text-align: left; }
+---
+stateDiagram-v2
+state PacketReaderFSM {
+  [*] --> RCVPCKT : CTRL#160;[byte#8594;byte#160;==#160;CharacterConstants.SOH]
+  RCVPCKT --> RCVDATA : CTRL#160;[byte#8594;byte#160;==#160;CharacterConstants.STX]#160;#8594;#160;#123;<br/>addField()<br/>#125;
+  RCVPCKT --> RCVCHK : BYTE#160;#8594;#160;#123;byte#8594;<br/>requireNotNull(byte)<br/>addChecksum(byte)<br/>#125;
+  RCVDATA --> RCVDATA : BYTE#160;#8594;#160;#123;byte#8594;<br/>requireNotNull(byte)<br/>addByte(byte)<br/>#125;
+  RCVDATA --> RCVPCKT : CTRL#160;[byte#8594;byte#160;==#160;CharacterConstants.ETX]#160;#8594;#160;#123;<br/>endField()<br/>#125;
+  RCVDATA --> RCVESC : ESC
+  RCVESC --> RCVDATA : ESC#160;#8594;#160;#123;<br/>addByte(CharacterConstants.ESC)<br/>#125;
+  RCVESC --> RCVDATA : CTRL#160;#8594;#160;#123;byte#8594;<br/>requireNotNull(byte)<br/>addByte(byte)<br/>#125;
+  RCVCHK --> RCVCHK : BYTE#160;#8594;#160;#123;byte#8594;<br/>requireNotNull(byte)<br/>addChecksum(byte)<br/>#125;
+  RCVCHK --> RCVCHKESC : ESC
+  RCVCHK --> CHKSUM : CTRL#160;[byte#8594;byte#160;==#160;CharacterConstants.EOT]#160;#8594;#160;#123;<br/>checksum()<br/>#125;
+  CHKSUM --> [*] : #60;#60;automatic#62;#62;#160;[!checksumValid]#160;#8594;#160;#123;<br/>sendNACK()<br/>#125;
+  CHKSUM --> [*] : #60;#60;automatic#62;#62;#160;[checksumValid]#160;#8594;#160;#123;<br/>sendACK()<br/>#125;
+  RCVCHKESC --> RCVCHK : ESC#160;#8594;#160;#123;<br/>addChecksum(CharacterConstants.ESC)<br/>#125;
+  RCVCHKESC --> RCVCHK : CTRL#160;#8594;#160;#123;byte#8594;<br/>requireNotNull(byte)<br/>addChecksum(byte)<br/>#125;
+}
+

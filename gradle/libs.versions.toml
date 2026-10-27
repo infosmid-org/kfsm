@@ -5,6 +5,7 @@ dokka = "2.2.0"
 coroutines = "1.11.0"
 kfsmViz = "2.0.1"
 kfsmVizPlugin = "2.0.2"
+dbc = "1.0.0"
 localProperties = "1.0.1"
 asciidoctorPlugin = "5.0.3"
 asciidoctorTabs = "1.0.0.beta.6"
@@ -28,6 +29,7 @@ kotlinx-coroutines-iossimulatorarm64 = { module = "org.jetbrains.kotlinx:kotlinx
 
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 kfsm-viz = { module = "org.infosmid:kfsm-viz", version.ref = "kfsmViz" }
+dbc = { module = "org.infosmid:design-by-contract", version.ref = "dbc" }
 plantuml = { module = "net.sourceforge.plantuml:plantuml", version.ref = "plantuml" }
 asciidoctor-tabs = { module = "rubygems:asciidoctor-tabs", version.ref = "asciidoctorTabs" }
 

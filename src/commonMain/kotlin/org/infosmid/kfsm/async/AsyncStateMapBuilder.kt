@@ -15,6 +15,7 @@
  */
 package org.infosmid.kfsm.async
 
+import org.infosmid.dbc.precondition
 import org.infosmid.kfsm.AsyncStateAction
 import org.infosmid.kfsm.AsyncStateChangeAction
 import org.infosmid.kfsm.Condition
@@ -75,8 +76,8 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>?,
         action: AsyncStateAction<C, A, R>?
     ) {
-        require(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
-        require(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
+        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
         val key = Pair(startState, event)
         val transitionRule = transitionRules[key]
         if (guard != null) {
@@ -111,7 +112,7 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
                 transitionRules[key] =
                     AsyncTransitionRules<S, E, C, A, R>(transition = transition)
             } else {
-                require(transitionRule.transition == null) { "Unguarded Transition for $startState on $event already defined" }
+                precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on $event already defined" }
                 transitionRule.transition = transition
             }
         }
@@ -134,8 +135,8 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>?,
         action: AsyncStateAction<C, A, R>?
     ) {
-        require(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
-        require(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
+        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
         val key = Pair(startState, event)
         val transitionRule = transitionRules[key]
         if (guard != null) {
@@ -170,7 +171,7 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
                 transitionRules[key] =
                     AsyncTransitionRules<S, E, C, A, R>(transition = transition)
             } else {
-                require(transitionRule.transition == null) { "Unguarded Transition for $startState on $event already defined" }
+                precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on $event already defined" }
                 transitionRule.transition = transition
             }
         }
@@ -193,9 +194,9 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>?,
         action: AsyncStateAction<C, A, R>?
     ) {
-        require(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
-        require(validStates.contains(startState)) { "$startState must be one of $validStates" }
-        require(parentBuilder.namedStateMaps.containsKey(targetMap)) { "$targetMap map not found in ${parentBuilder.namedStateMaps.keys}" }
+        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
+        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(parentBuilder.namedStateMaps.containsKey(targetMap)) { "$targetMap map not found in ${parentBuilder.namedStateMaps.keys}" }
         val key = Pair(startState, event)
         val transitionRule = transitionRules[key]
         if (guard != null) {
@@ -231,7 +232,7 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
                 transitionRules[key] =
                     AsyncTransitionRules<S, E, C, A, R>(mutableListOf(), transition)
             } else {
-                require(transitionRule.transition == null) { "Unguarded Transition for $startState on $event already defined" }
+                precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on $event already defined" }
                 transitionRule.transition = transition
             }
         }
@@ -244,12 +245,11 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
      * @param action The optional action will be invoked
      */
     fun automatic(startState: S, targetState: S, guard: StateGuard<C, A>?, action: AsyncStateAction<C, A, R>?) {
-        require(validStates.contains(targetState)) { "$targetState must be one of $validStates" }
-        require(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(targetState)) { "$targetState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
         val transitionRule = automaticTransitions[startState]
         if (guard != null) {
-            val transition =
-                AsyncGuardedTransition<S, E, C, A, R>(
+            val transition = AsyncGuardedTransition<S, E, C, A, R>(
                     startState,
                     null,
                     targetState,
@@ -260,14 +260,14 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
                     action
                 )
             if (transitionRule == null) {
-                automaticTransitions[startState] =
-                    AsyncTransitionRules<S, E, C, A, R>(mutableListOf(transition))
+                automaticTransitions[startState] = AsyncTransitionRules<S, E, C, A, R>(
+                    mutableListOf(transition)
+                )
             } else {
                 transitionRule.addGuarded(transition)
             }
         } else {
-            val transition =
-                SimpleAsyncTransition<S, E, C, A, R>(
+            val transition = SimpleAsyncTransition<S, E, C, A, R>(
                     startState,
                     null,
                     targetState,
@@ -277,10 +277,12 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
                     action
                 )
             if (transitionRule == null) {
-                automaticTransitions[startState] =
-                    AsyncTransitionRules<S, E, C, A, R>(mutableListOf(), transition)
+                automaticTransitions[startState] = AsyncTransitionRules<S, E, C, A, R>(
+                    mutableListOf(),
+                    transition
+                )
             } else {
-                require(transitionRule.transition == null) { "Unguarded Transition for $startState on already defined" }
+                precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on already defined" }
                 transitionRule.transition = transition
             }
         }
@@ -300,8 +302,8 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>?,
         action: AsyncStateAction<C, A, R>?
     ) {
-        require(validStates.contains(targetState)) { "$targetState must be one of $validStates" }
-        require(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(targetState)) { "$targetState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
         val timerDefinition = timerActions[startState]
         if (guard != null) {
             val transition =
@@ -333,10 +335,12 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
                     action
                 )
             if (timerDefinition == null) {
-                timerActions[startState] =
-                    AsyncTimerDefinition(timeout, AsyncTransitionRules<S, E, C, A, R>(mutableListOf(), transition))
+                timerActions[startState] = AsyncTimerDefinition(
+                    timeout,
+                    AsyncTransitionRules<S, E, C, A, R>(mutableListOf(), transition)
+                )
             } else {
-                require(timerDefinition.rule.transition == null) { "Unguarded Transition for $startState on already defined" }
+                precondition(timerDefinition.rule.transition == null) { "Unguarded Transition for $startState on already defined" }
                 timerDefinition.rule.transition = transition
             }
         }
@@ -357,7 +361,7 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>?,
         action: AsyncStateAction<C, A, R>?
     ) {
-        require(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
         val transitionRule = automaticTransitions[startState]
         if (guard != null) {
             val transition =
@@ -391,7 +395,7 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
                 automaticTransitions[startState] =
                     AsyncTransitionRules<S, E, C, A, R>(transition = transition)
             } else {
-                require(transitionRule.transition == null) { "Unguarded Transition for $startState on already defined" }
+                precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on already defined" }
                 transitionRule.transition = transition
             }
         }
@@ -414,7 +418,7 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>?,
         action: AsyncStateAction<C, A, R>?
     ) {
-        require(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
         val timerDefinition = timerActions[startState]
         if (guard != null) {
             val transition =
@@ -446,10 +450,12 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
                     action
                 )
             if (timerDefinition == null) {
-                timerActions[startState] =
-                    AsyncTimerDefinition(timeout, AsyncTransitionRules<S, E, C, A, R>(mutableListOf(), transition))
+                timerActions[startState] = AsyncTimerDefinition(
+                    timeout,
+                    AsyncTransitionRules<S, E, C, A, R>(mutableListOf(), transition)
+                )
             } else {
-                require(timerDefinition.rule.transition == null) { "Unguarded Transition for $startState on already defined" }
+                precondition(timerDefinition.rule.transition == null) { "Unguarded Transition for $startState on already defined" }
                 timerDefinition.rule.transition = transition
             }
         }
@@ -470,11 +476,10 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>?,
         action: AsyncStateAction<C, A, R>?
     ) {
-        require(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
         val transitionRule = automaticTransitions[startState]
         if (guard != null) {
-            val transition =
-                AsyncGuardedTransition<S, E, C, A, R>(
+            val transition = AsyncGuardedTransition<S, E, C, A, R>(
                     startState,
                     null,
                     targetState,
@@ -491,8 +496,7 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
                 transitionRule.addGuarded(transition)
             }
         } else {
-            val transition =
-                SimpleAsyncTransition<S, E, C, A, R>(
+            val transition = SimpleAsyncTransition<S, E, C, A, R>(
                     startState,
                     null,
                     targetState,
@@ -502,10 +506,9 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
                     action
                 )
             if (transitionRule == null) {
-                automaticTransitions[startState] =
-                    AsyncTransitionRules<S, E, C, A, R>(transition = transition)
+                automaticTransitions[startState] = AsyncTransitionRules<S, E, C, A, R>(transition = transition)
             } else {
-                require(transitionRule.transition == null) { "Unguarded Transition for $startState on already defined" }
+                precondition(transitionRule.transition == null) { "Unguarded Transition for $startState on already defined" }
                 transitionRule.transition = transition
             }
         }
@@ -528,11 +531,10 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
         guard: StateGuard<C, A>?,
         action: AsyncStateAction<C, A, R>?
     ) {
-        require(validStates.contains(startState)) { "$startState must be one of $validStates" }
+        precondition(validStates.contains(startState)) { "$startState must be one of $validStates" }
         val timerDefinition = timerActions[startState]
         if (guard != null) {
-            val transition =
-                AsyncGuardedTransition<S, E, C, A, R>(
+            val transition = AsyncGuardedTransition<S, E, C, A, R>(
                     startState,
                     null,
                     targetState,
@@ -543,14 +545,15 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
                     action
                 )
             if (timerDefinition == null) {
-                timerActions[startState] =
-                    AsyncTimerDefinition(timeout, AsyncTransitionRules<S, E, C, A, R>(mutableListOf(transition)))
+                timerActions[startState] =  AsyncTimerDefinition(
+                    timeout,
+                    AsyncTransitionRules<S, E, C, A, R>(mutableListOf(transition))
+                )
             } else {
                 timerDefinition.rule.addGuarded(transition)
             }
         } else {
-            val transition =
-                SimpleAsyncTransition<S, E, C, A, R>(
+            val transition = SimpleAsyncTransition<S, E, C, A, R>(
                     startState,
                     null,
                     targetState,
@@ -560,10 +563,12 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
                     action
                 )
             if (timerDefinition == null) {
-                timerActions[startState] =
-                    AsyncTimerDefinition(timeout, AsyncTransitionRules<S, E, C, A, R>(mutableListOf(), transition))
+                timerActions[startState] = AsyncTimerDefinition(
+                    timeout,
+                    AsyncTransitionRules<S, E, C, A, R>(mutableListOf(), transition)
+                )
             } else {
-                require(timerDefinition.rule.transition == null) { "Unguarded Transition for $startState on already defined" }
+                precondition(timerDefinition.rule.transition == null) { "Unguarded Transition for $startState on already defined" }
                 timerDefinition.rule.transition = transition
             }
         }
@@ -600,8 +605,8 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
      * @param action This action will be invoked
      */
     fun default(currentState: S, action: DefaultAsyncStateAction<C, S, E, A, R>) {
-        require(validStates.contains(currentState)) { "$currentState must be one of $validStates" }
-        require(defaultActions[currentState] == null) { "Default defaultAction already defined for $currentState" }
+        precondition(validStates.contains(currentState)) { "$currentState must be one of $validStates" }
+        precondition(defaultActions[currentState] == null) { "Default defaultAction already defined for $currentState" }
         defaultActions[currentState] = action
     }
 
@@ -611,8 +616,8 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
      * @param action The option action will be executed when this default transition occurs.
      */
     fun default(event: EventState<E, S>, action: AsyncStateAction<C, A, R>?) {
-        require(parentBuilder.validEvents.contains(event.first)) { "$event must be one of ${parentBuilder.validEvents}" }
-        require(defaultTransitions[event.first] == null) { "Default transition for ${event.first} already defined" }
+        precondition(parentBuilder.validEvents.contains(event.first)) { "$event must be one of ${parentBuilder.validEvents}" }
+        precondition(defaultTransitions[event.first] == null) { "Default transition for ${event.first} already defined" }
         defaultTransitions[event.first] =
             DefaultAsyncTransition<S, E, C, A, R>(
                 event.first,
@@ -630,8 +635,8 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
      * @param action The option action will be executed when this default transition occurs.
      */
     fun default(event: E, action: AsyncStateAction<C, A, R>?) {
-        require(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
-        require(defaultTransitions[event] == null) { "Default transition for $event already defined" }
+        precondition(parentBuilder.validEvents.contains(event)) { "$event must be one of ${parentBuilder.validEvents}" }
+        precondition(defaultTransitions[event] == null) { "Default transition for $event already defined" }
         defaultTransitions[event] = DefaultAsyncTransition<S, E, C, A, R>(
             event,
             null,
@@ -648,8 +653,8 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
      * @param action This action will be invoked
      */
     fun entry(currentState: S, action: DefaultEntryExitAction<C, S, A>) {
-        require(validStates.contains(currentState)) { "$currentState must be one of $validStates" }
-        require(entryActions[currentState] == null) { "Entry defaultAction already defined for $currentState" }
+        precondition(validStates.contains(currentState)) { "$currentState must be one of $validStates" }
+        precondition(entryActions[currentState] == null) { "Entry defaultAction already defined for $currentState" }
         entryActions[currentState] = action
     }
 
@@ -659,8 +664,8 @@ class AsyncStateMapBuilder<S, E, C, A, R>(
      * @param action This action will be invoked
      */
     fun exit(currentState: S, action: DefaultEntryExitAction<C, S, A>) {
-        require(validStates.contains(currentState)) { "$currentState must be one of $validStates" }
-        require(exitActions[currentState] == null) { "Exit defaultAction already defined for $currentState" }
+        precondition(validStates.contains(currentState)) { "$currentState must be one of $validStates" }
+        precondition(exitActions[currentState] == null) { "Exit defaultAction already defined for $currentState" }
         exitActions[currentState] = action
     }
 

@@ -15,6 +15,8 @@
  */
 package org.infosmid.kfsm
 
+import org.infosmid.dbc.precondition
+
 /**
  * This class represents the definition of a statemachine.
  * @author Corneil du Plessis
@@ -37,7 +39,7 @@ class StateMachineBuilder<S, E, C, A, R>(validMapStates: Set<S>, internal val va
      * @param init Is a function that receives a context and returns the state that represents the context
      */
     fun initialState(init: StateQuery<C, S>) {
-        require(!completed) { "Statemachine has been completed" }
+        precondition(!completed) { "Statemachine has been completed" }
         deriveInitialState = init
     }
 
@@ -47,7 +49,7 @@ class StateMachineBuilder<S, E, C, A, R>(validMapStates: Set<S>, internal val va
      * @param init Is a function that will use the context to provide a list which will be pushed on the stack. The last item in the list will become the current state.
      */
     fun initialStates(init: StateMapQuery<C, S>) {
-        require(!completed) { "Statemachine has been completed" }
+        precondition(!completed) { "Statemachine has been completed" }
         deriveInitialStateMap = init
     }
 
@@ -60,9 +62,9 @@ class StateMachineBuilder<S, E, C, A, R>(validMapStates: Set<S>, internal val va
         name: String,
         validStates: Set<S>
     ): StateMapBuilder<S, E, C, A, R> {
-        require(name.trim().isNotEmpty()) { "statemap name must not be empty" }
-        require(name != "default") { "Map cannot be named 'default'" }
-        require(validStates.isNotEmpty()) { "Provide at least one entty in validStates" }
+        precondition(name.trim().isNotEmpty()) { "statemap name must not be empty" }
+        precondition(name != "default") { "Map cannot be named 'default'" }
+        precondition(validStates.isNotEmpty()) { "Provide at least one entty in validStates" }
         val stateMapBuilder = StateMapBuilder<S, E, C, A, R>(validStates, name, this)
         namedStateMaps[name] = stateMapBuilder
         return stateMapBuilder
@@ -75,7 +77,7 @@ class StateMachineBuilder<S, E, C, A, R>(validMapStates: Set<S>, internal val va
     fun complete(): StateMachineDefinition<S, E, C, A, R> {
         completed = true
         if (namedStateMaps.isNotEmpty()) {
-            require(this.deriveInitialState == null) { "deriveInitialState cannot be used with named state maps" }
+            precondition(this.deriveInitialState == null) { "deriveInitialState cannot be used with named state maps" }
         }
         return StateMachineDefinition(
             this.defaultInitialState,

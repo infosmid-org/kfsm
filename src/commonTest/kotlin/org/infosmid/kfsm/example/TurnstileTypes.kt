@@ -81,8 +81,7 @@ class TurnstileFSM(turnstile: Turnstile, savedState: TurnstileStates? = null) {
     fun allowedEvents() = fsm.allowed().map { it.name.lowercase() }.toSet()
 
     companion object {
-        val definition =
-            stateMachine(
+        private val definition = stateMachine(
                 TurnstileStates.entries.toSet(),
                 TurnstileEvents.entries.toSet(),
                 Turnstile::class

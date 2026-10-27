@@ -15,6 +15,8 @@
  */
 package org.infosmid.kfsm
 
+import org.infosmid.dbc.precondition
+
 /**
  * This class represents an instance of a state machine.
  * It will process events, matching transitions, invoking entry, transition and exit actions.
@@ -84,8 +86,8 @@ class StateMachineInstance<S, E, C, A, R>(
 
     internal fun execute(transition: SyncTransition<S, E, C, A, R>, arg: A?): R? {
         val result = if (transition.type == TransitionType.PUSH) {
-            require(transition.targetState != null) { "Target state cannot be null for pushTransition" }
-            require(transition.targetMap != null) { "Target map cannot be null for pushTransition" }
+            precondition(transition.targetState != null) { "Target state cannot be null for pushTransition" }
+            precondition(transition.targetMap != null) { "Target map cannot be null for pushTransition" }
             if (transition.targetMap != currentStateMap.name) {
                 executePush(transition, arg)
             } else {

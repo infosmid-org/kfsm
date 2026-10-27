@@ -2,13 +2,9 @@
 
 ## What's New
 
-- Relocated the project to infosmid.org
-- precondition support contracts
-- Gradle plugin now generates Mermaid State Diagrams as well.
-
-## ⚠️ Breaking Changes
-
-The package names have changed from `io.jumpco.open` to `org.infosmid` 
+- Adding dependency to `org.infosmid:design-by-contract` where `precondition` was moved.
+- Changed the use of `require` and `requireNotNull` to `precondition` and `preconditionNotNull`
+- Updated docs and samples to generate Mermaid diagrams as well.
 
 ## 📦 Artifacts
 

@@ -15,6 +15,8 @@
  */
 package org.infosmid.kfsm
 
+import org.infosmid.dbc.preconditionNotNull
+
 /**
  * @suppress
  * The base for all transitions.
@@ -32,7 +34,7 @@ open class SyncTransition<S, E, C, A, R>(
 ) {
     init {
         if (type == TransitionType.PUSH) {
-            require(targetState != null) { "targetState is required for push transition" }
+            preconditionNotNull(targetState) { "targetState is required for push transition" }
         }
     }
 

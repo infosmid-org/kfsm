@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(ExperimentalContracts::class)
 
 package org.infosmid.kfsm
 
-import kotlin.Pair
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
+import org.infosmid.dbc.InvariantException
+import org.infosmid.dbc.PreConditionException
+import org.infosmid.dbc.precondition
 
 /**
  * This represents an action that may be invoked during a transition.
@@ -128,54 +127,16 @@ enum class TransitionType {
     TIMEOUT
 }
 
-class PreConditionException(message: String) : RuntimeException(message)
-class PostConditionException(message: String) : RuntimeException(message)
-class InvariantException(message: String) : RuntimeException(message)
+typealias Condition<C> = C.() -> Boolean
 
+/**
+ * Used by state machine execution to check invariant conditions.
+ */
 @Throws(InvariantException::class)
-inline fun invariant(condition: Boolean, errorMessage: () -> String) {
-    contract { returns() implies condition }
-    if (!condition) {
-        throw InvariantException(errorMessage.invoke())
-    }
-}
-
-@Throws(InvariantException::class)
-inline fun <C> checkInvariant(context: C, condition: Pair<String, Condition<C>>?) {
+fun <C> checkInvariant(context: C, condition: Pair<String, Condition<C>>?) {
     val check = condition?.second?.invoke(context) ?: true
 
     if (!check) throw InvariantException(condition.first)
-}
-
-typealias Condition<C> = C.() -> Boolean
-
-
-@Throws(PreConditionException::class)
-inline fun precondition(condition: Boolean, errorMessage: () -> String) {
-    contract { returns() implies condition }
-    if (!condition) {
-        throw PreConditionException(errorMessage.invoke())
-    }
-}
-
-@Throws(PostConditionException::class)
-inline fun postcondition(condition: Boolean, errorMessage: () -> String) {
-    contract { returns() implies condition }
-    if (condition) {
-        throw PostConditionException(errorMessage.invoke())
-    }
-}
-
-@Throws(PreConditionException::class)
-inline fun <C> checkPrecondition(context: C, condition: Pair<String, Condition<C>>?) {
-    val check = condition?.second?.invoke(context) ?: true
-    if (!check) throw PreConditionException(condition!!.first)
-}
-
-@Throws(PostConditionException::class)
-inline fun <C> checkPostcondition(context: C, condition: Pair<String, Condition<C>>?) {
-    val check = condition?.second?.invoke(context) ?: true
-    if (!check) throw PostConditionException(condition!!.first)
 }
 
 /**
@@ -195,6 +156,7 @@ class Stack<T> {
      * @return The element on the top of the stack
      * @throws PreConditionException if the stack is empty
      */
+    @Throws(PreConditionException::class)
     fun pop(): T {
         precondition(isNotEmpty()) { "stack is empty" }
         return elements.removeAt(elements.lastIndex)
