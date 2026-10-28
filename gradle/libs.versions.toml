@@ -6,7 +6,7 @@ coroutines = "1.11.0"
 kfsmViz = "2.0.1"
 kfsmVizPlugin = "2.0.2"
 dbc = "1.0.0"
-localProperties = "1.0.1"
+local-properties = "1.0.2"
 asciidoctorPlugin = "5.0.3"
 asciidoctorTabs = "1.0.0.beta.6"
 plantuml = "1.2026.9"
@@ -40,5 +40,5 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 asciidoctorj = { id = "org.asciidoctor.jvm", version.ref = "asciidoctorPlugin" }
 asciidoctorjGems = { id = "org.asciidoctor.jvm.gems", version.ref = "asciidoctorPlugin" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-plugin" }
-local-properties = { id = "io.jumpco.open.gradle.local-properties", version.ref = "localProperties" }
-kfsm-viz = { id = "org.infosmid.plugins.kfsm-viz", version.ref = "kfsmVizPlugin" }
+infosmid-local-properties = { id = "org.infosmid.plugins.local-properties", version.ref = "local-properties" }
+infosmid-kfsm-viz = { id = "org.infosmid.plugins.kfsm-viz", version.ref = "kfsmVizPlugin" }
