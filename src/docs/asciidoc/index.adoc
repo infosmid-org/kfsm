@@ -1,4 +1,5 @@
 = KFSM - Kotlin Finite-state machine
+:project-version: 2.0.0
 :toc:
 :toclevels: 3
 
@@ -43,8 +44,9 @@ kfsm has these features:
 * Timeout transitions.
 * State change notification action.
 
+include::documentation.adoc[]
+
 == Tutorial
 
 include::kfsm.adoc[]
 
-include::documentation.adoc[]

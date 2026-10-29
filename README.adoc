@@ -328,6 +328,57 @@ dependencies {
 ----
 
 
+==== Gradle version catalog (`gradle/libs.versions.toml`)
+
+Declare the library in the version catalog:
+
+[source,toml,subs="attributes+"]
+----
+[versions]
+kfsm = "{project-version}"
+
+[libraries]
+infosmid-kfsm = { module = "org.infosmid:kfsm", version.ref = "kfsm" }
+----
+
+Then use the catalog accessor in the build script.
+
+For Kotlin Multiplatform
+
+==== Kotlin Multiplatform
+
+[source,groovy]
+----
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation(libs.infosmid.kfsm)
+            }
+        }
+    }
+}
+----
+
+For a single platform (JVM / Android)
+
+==== Single Platform
+
+[source,groovy]
+----
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation(libs.infosmid.kfsm)
+}
+----
+
 == Visualisation
 
 For more information about the visualization options, see link:https://github.com/infosmid-org/kfsm-viz[kfsm-viz].

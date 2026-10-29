@@ -453,25 +453,29 @@ kfsmViz {
 tasks.register('updateReadmeVersion') {
     group = 'documentation'
     description = 'Modifies :project-version: attribute at the top of README.adoc'
-    def readmeFile = layout.projectDirectory.file('README.adoc').asFile
+    def files = [layout.projectDirectory.file('README.adoc').asFile,layout.projectDirectory.dir('src/docs/asciidoc').file('index.adoc').asFile]
     def projectVersion = providers.provider { project.version.toString() }
     inputs.property('version', projectVersion)
-    outputs.file(readmeFile)
+    outputs.files(files)
     doLast {
-        if (!readmeFile.exists()) return
-        def content = readmeFile.text
-        def versionStr = projectVersion.get()
-        def versionAttr = ":project-version: ${versionStr}"
-        if (content =~ /(?m)^:project-version:.*$/) {
-            content = content.replaceFirst(/(?m)^:project-version:.*$/, versionAttr)
-        } else {
-            def matcher = content =~ /(?m)^(=[^\r\n]*\r?\n)/
-            if (matcher.find()) {
-                content = content.substring(0, matcher.end()) + versionAttr + "\n" + content.substring(matcher.end())
-            } else {
-                content = versionAttr + "\n" + content
+        files.forEach { file ->
+            if (file.exists()) {
+                def content = file.text
+                def versionStr = projectVersion.get()
+                def versionAttr = ":project-version: ${versionStr}"
+                if (content =~ /(?m)^:project-version:.*$/) {
+                    content = content.replaceFirst(/(?m)^:project-version:.*$/, versionAttr)
+                } else {
+                    def matcher = content =~ /(?m)^(=[^\r\n]*\r?\n)/
+                    if (matcher.find()) {
+                        content = content.substring(0, matcher.end()) + versionAttr + "\n" + content.substring(matcher.end())
+                    } else {
+                        content = versionAttr + "\n" + content
+                    }
+                }
+                file.text = content
+                logger.lifecycle("$path:updated:$file with project_versio=$versionStr")
             }
         }
-        readmeFile.text = content
     }
 }

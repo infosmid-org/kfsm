@@ -3,19 +3,14 @@
 === Repository
 
 Releases are on Maven Central.
-Snapshots are in GitHub Packages.
+Snapshots are in the GitHub Packages Maven repository.
 Contact us for a personal access token (PAT) to get snapshot releases.
 
 === Dependencies
 
-kfsm is a Kotlin Multiplatform library.
-The version in the examples is 2.0.0.
+==== Kotlin Multiplatform (`build.gradle.kts`)
 
-==== Kotlin Multiplatform Projects
-
-===== Gradle Kotlin DSL
-
-[source,kotlin]
+[source,kotlin,subs="attributes+"]
 ----
 repositories {
     mavenCentral()
@@ -24,13 +19,78 @@ repositories {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("org.infosmid:kfsm:2.0.0")
+            implementation("org.infosmid:kfsm:{project-version}")
         }
     }
 }
 ----
 
-===== Gradle Groovy DSL
+==== Kotlin Multiplatform (`build.gradle` - Groovy DSL)
+
+[source,groovy,subs="attributes+"]
+----
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation 'org.infosmid:kfsm:{project-version}'
+            }
+        }
+    }
+}
+----
+
+==== Single Platform (JVM / Android)
+
+===== Kotlin DSL (`build.gradle.kts`)
+
+[source,kotlin,subs="attributes+"]
+----
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.infosmid:kfsm:{project-version}")
+}
+----
+
+===== Groovy DSL (`build.gradle`)
+
+[source,groovy,subs="attributes+"]
+----
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.infosmid:kfsm:{project-version}'
+}
+----
+
+
+==== Gradle version catalog (`gradle/libs.versions.toml`)
+
+Declare the library in the version catalog:
+
+[source,toml,subs="attributes+"]
+----
+[versions]
+kfsm = "{project-version}"
+
+[libraries]
+infosmid-kfsm = { module = "org.infosmid:kfsm", version.ref = "kfsm" }
+----
+
+Then use the catalog accessor in the build script.
+
+For Kotlin Multiplatform
+
+==== Kotlin Multiplatform
 
 [source,groovy]
 ----
@@ -42,30 +102,25 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation 'org.infosmid:kfsm:2.0.0'
+                implementation(libs.infosmid.kfsm)
             }
         }
     }
 }
 ----
 
-==== Kotlin/JVM Projects and Android Projects
+For a single platform (JVM / Android)
 
-===== Gradle Kotlin DSL
-
-[source,kotlin]
-----
-dependencies {
-    implementation("org.infosmid:kfsm:2.0.0")
-}
-----
-
-===== Gradle Groovy DSL
+==== Single Platform
 
 [source,groovy]
 ----
+repositories {
+    mavenCentral()
+}
+
 dependencies {
-    implementation 'org.infosmid:kfsm:2.0.0'
+    implementation(libs.infosmid.kfsm)
 }
 ----
 
